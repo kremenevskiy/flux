@@ -1,0 +1,100 @@
+[tool.poetry]
+name = "flux"
+version = "0.1.0"
+description = ""
+authors = ["kremenevskiy"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+diffusers = "0.30.2"
+opencv-python = "^4.10.0.84"
+uvicorn = "^0.32.0"
+fastapi = "^0.115.5"
+torch = "^2.5.1"
+huggingface-hub = "^0.26.2"
+transformers = "^4.46.2"
+sentencepiece = "^0.2.0"
+accelerate = "^1.1.1"
+python-multipart = "^0.0.17"
+protobuf = "^5.28.3"
+jupyter = "^1.1.1"
+lab = "^8.3"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.7.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+
+[tool.ruff.lint]
+
+select = ["ALL"]
+
+
+ignore = [
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public methods
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package (__init__.py)
+    "D107", # Missing docstring in `__init__`Ruff
+    "D401", # First line of docstring should be in imperative mood
+    "D407", # Missing dashed underline after section ("Args")
+
+    "ANN002", # Missing type annotation for `*args`
+    "ANN003", # Missing type annotation for `*kwargs`
+    "ANN202", # Missing return type annotation for private function
+    "ANN204", # Missing return type annotation for special method `__init__`
+    
+    "COM812", # Trailing comma missing
+
+    "TRY003", # Avoid specifying long messages outside the exception class
+
+    "UP035", # Import from `collections.abc` instead (from typing import Callable)
+
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "EM102", # Exception must not use an f-string literal, assign to variable first
+
+    "E501", # Line too long (124 > 100)
+
+    "S104", # hardcoded-bind-all-interfaces
+    "S301", # `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
+    "S310", # Audit URL open for permitted schemes. Allowing use of `file:` or custom schemes is often unexpected.
+    "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "S324", # Probable use of insecure hash functions in `hashlib`: `md5`
+    "S603", # `subprocess` call: check for execution of untrusted
+    
+    "PD901", # Avoid using the generic variable name `df` for DataFrames
+    
+    "RUF001", # ambiguous-unicode-character-string (RUF001)
+    "RUF003", # ambiguous-unicode-character-comment
+
+    "N802", # Function name should be lowercase
+
+    "DTZ005", # call-datetime-now-without-tzinfo
+
+    "Q001", # Double quote multiline found but single quotes preferred
+
+    "TD003", # Missing issue link on the line following this
+
+    "FIX002", # Line contains TODO, consider resolving the issue
+    
+    "PLR0913", # Too many arguments in function definition (6 > 5)
+   
+]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+multiline-quotes = "single"
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+# check_untyped_defs = false  # Disable checking of untyped function bodies
+
