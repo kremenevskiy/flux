@@ -3,17 +3,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import torch
-from transformers import (
-    CLIPTextModel,
-    CLIPTokenizer,
-    T5EncoderModel,
-    T5TokenizerFast,
-)
-
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.loaders import FluxLoraLoaderMixin
 from diffusers.models.autoencoders import AutoencoderKL
-
+from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.schedulers import FlowMatchEulerDiscreteScheduler
 from diffusers.utils import (
     USE_PEFT_BACKEND,
@@ -24,11 +18,15 @@ from diffusers.utils import (
     unscale_lora_layers,
 )
 from diffusers.utils.torch_utils import randn_tensor
-from diffusers.pipelines.pipeline_utils import DiffusionPipeline
-from diffusers.pipelines.flux.pipeline_output import FluxPipelineOutput
+from transformers import (
+    CLIPTextModel,
+    CLIPTokenizer,
+    T5EncoderModel,
+    T5TokenizerFast,
+)
 
-from transformer_flux import FluxTransformer2DModel
-from controlnet_flux import FluxControlNetModel
+from flux_inpaint.controlnet_flux import FluxControlNetModel
+from flux_inpaint.transformer_flux import FluxTransformer2DModel
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -117,28 +115,28 @@ def retrieve_timesteps(
     """
     if timesteps is not None and sigmas is not None:
         raise ValueError(
-            "Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values"
+            'Only one of `timesteps` or `sigmas` can be passed. Please choose one to set custom values'
         )
     if timesteps is not None:
-        accepts_timesteps = "timesteps" in set(
+        accepts_timesteps = 'timesteps' in set(
             inspect.signature(scheduler.set_timesteps).parameters.keys()
         )
         if not accepts_timesteps:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom"
-                f" timestep schedules. Please check whether you are using the correct scheduler."
+                f' timestep schedules. Please check whether you are using the correct scheduler.'
             )
         scheduler.set_timesteps(timesteps=timesteps, device=device, **kwargs)
         timesteps = scheduler.timesteps
         num_inference_steps = len(timesteps)
     elif sigmas is not None:
-        accept_sigmas = "sigmas" in set(
+        accept_sigmas = 'sigmas' in set(
             inspect.signature(scheduler.set_timesteps).parameters.keys()
         )
         if not accept_sigmas:
             raise ValueError(
                 f"The current scheduler class {scheduler.__class__}'s `set_timesteps` does not support custom"
-                f" sigmas schedules. Please check whether you are using the correct scheduler."
+                f' sigmas schedules. Please check whether you are using the correct scheduler.'
             )
         scheduler.set_timesteps(sigmas=sigmas, device=device, **kwargs)
         timesteps = scheduler.timesteps
@@ -176,9 +174,9 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             [T5TokenizerFast](https://huggingface.co/docs/transformers/en/model_doc/t5#transformers.T5TokenizerFast).
     """
 
-    model_cpu_offload_seq = "text_encoder->text_encoder_2->transformer->vae"
+    model_cpu_offload_seq = 'text_encoder->text_encoder_2->transformer->vae'
     _optional_components = []
-    _callback_tensor_inputs = ["latents", "prompt_embeds"]
+    _callback_tensor_inputs = ['latents', 'prompt_embeds']
 
     def __init__(
         self,
@@ -205,10 +203,15 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         )
         self.vae_scale_factor = (
             2 ** (len(self.vae.config.block_out_channels))
-            if hasattr(self, "vae") and self.vae is not None
+            if hasattr(self, 'vae') and self.vae is not None
             else 16
         )
-        self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor, do_resize=True, do_convert_rgb=True, do_normalize=True)
+        self.image_processor = VaeImageProcessor(
+            vae_scale_factor=self.vae_scale_factor,
+            do_resize=True,
+            do_convert_rgb=True,
+            do_normalize=True,
+        )
         self.mask_processor = VaeImageProcessor(
             vae_scale_factor=self.vae_scale_factor,
             do_resize=True,
@@ -218,11 +221,11 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         )
         self.tokenizer_max_length = (
             self.tokenizer.model_max_length
-            if hasattr(self, "tokenizer") and self.tokenizer is not None
+            if hasattr(self, 'tokenizer') and self.tokenizer is not None
             else 77
         )
         self.default_sample_size = 64
-    
+
     @property
     def do_classifier_free_guidance(self):
         return self._guidance_scale > 1
@@ -243,17 +246,15 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
         text_inputs = self.tokenizer_2(
             prompt,
-            padding="max_length",
+            padding='max_length',
             max_length=max_sequence_length,
             truncation=True,
             return_length=False,
             return_overflowing_tokens=False,
-            return_tensors="pt",
+            return_tensors='pt',
         )
         text_input_ids = text_inputs.input_ids
-        untruncated_ids = self.tokenizer_2(
-            prompt, padding="longest", return_tensors="pt"
-        ).input_ids
+        untruncated_ids = self.tokenizer_2(prompt, padding='longest', return_tensors='pt').input_ids
 
         if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
             text_input_ids, untruncated_ids
@@ -262,13 +263,13 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
                 untruncated_ids[:, self.tokenizer_max_length - 1 : -1]
             )
             logger.warning(
-                "The following part of your input was truncated because `max_sequence_length` is set to "
-                f" {max_sequence_length} tokens: {removed_text}"
+                'The following part of your input was truncated because `max_sequence_length` is set to '
+                f' {max_sequence_length} tokens: {removed_text}'
             )
 
-        prompt_embeds = self.text_encoder_2(
-            text_input_ids.to(device), output_hidden_states=False
-        )[0]
+        prompt_embeds = self.text_encoder_2(text_input_ids.to(device), output_hidden_states=False)[
+            0
+        ]
 
         dtype = self.text_encoder_2.dtype
         prompt_embeds = prompt_embeds.to(dtype=dtype, device=device)
@@ -277,9 +278,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
         # duplicate text embeddings and attention mask for each generation per prompt, using mps friendly method
         prompt_embeds = prompt_embeds.repeat(1, num_images_per_prompt, 1)
-        prompt_embeds = prompt_embeds.view(
-            batch_size * num_images_per_prompt, seq_len, -1
-        )
+        prompt_embeds = prompt_embeds.view(batch_size * num_images_per_prompt, seq_len, -1)
 
         return prompt_embeds
 
@@ -296,18 +295,16 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
         text_inputs = self.tokenizer(
             prompt,
-            padding="max_length",
+            padding='max_length',
             max_length=self.tokenizer_max_length,
             truncation=True,
             return_overflowing_tokens=False,
             return_length=False,
-            return_tensors="pt",
+            return_tensors='pt',
         )
 
         text_input_ids = text_inputs.input_ids
-        untruncated_ids = self.tokenizer(
-            prompt, padding="longest", return_tensors="pt"
-        ).input_ids
+        untruncated_ids = self.tokenizer(prompt, padding='longest', return_tensors='pt').input_ids
         if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
             text_input_ids, untruncated_ids
         ):
@@ -315,12 +312,10 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
                 untruncated_ids[:, self.tokenizer_max_length - 1 : -1]
             )
             logger.warning(
-                "The following part of your input was truncated because CLIP can only handle sequences up to"
-                f" {self.tokenizer_max_length} tokens: {removed_text}"
+                'The following part of your input was truncated because CLIP can only handle sequences up to'
+                f' {self.tokenizer_max_length} tokens: {removed_text}'
             )
-        prompt_embeds = self.text_encoder(
-            text_input_ids.to(device), output_hidden_states=False
-        )
+        prompt_embeds = self.text_encoder(text_input_ids.to(device), output_hidden_states=False)
 
         # Use pooled output of CLIPTextModel
         prompt_embeds = prompt_embeds.pooler_output
@@ -415,9 +410,9 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
         if do_classifier_free_guidance:
             # 处理 negative prompt
-            negative_prompt = negative_prompt or ""
+            negative_prompt = negative_prompt or ''
             negative_prompt_2 = negative_prompt_2 or negative_prompt
-            
+
             negative_pooled_prompt_embeds = self._get_clip_prompt_embeds(
                 negative_prompt,
                 device=device,
@@ -431,7 +426,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             )
         else:
             negative_pooled_prompt_embeds = None
-            negative_prompt_embeds = None            
+            negative_prompt_embeds = None
 
         if self.text_encoder is not None:
             if isinstance(self, FluxLoraLoaderMixin) and USE_PEFT_BACKEND:
@@ -447,7 +442,13 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             device=device, dtype=self.text_encoder.dtype
         )
 
-        return prompt_embeds, pooled_prompt_embeds, negative_prompt_embeds, negative_pooled_prompt_embeds,text_ids
+        return (
+            prompt_embeds,
+            pooled_prompt_embeds,
+            negative_prompt_embeds,
+            negative_pooled_prompt_embeds,
+            text_ids,
+        )
 
     def check_inputs(
         self,
@@ -462,64 +463,55 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
     ):
         if height % 8 != 0 or width % 8 != 0:
             raise ValueError(
-                f"`height` and `width` have to be divisible by 8 but are {height} and {width}."
+                f'`height` and `width` have to be divisible by 8 but are {height} and {width}.'
             )
 
         if callback_on_step_end_tensor_inputs is not None and not all(
-            k in self._callback_tensor_inputs
-            for k in callback_on_step_end_tensor_inputs
+            k in self._callback_tensor_inputs for k in callback_on_step_end_tensor_inputs
         ):
             raise ValueError(
-                f"`callback_on_step_end_tensor_inputs` has to be in {self._callback_tensor_inputs}, but found {[k for k in callback_on_step_end_tensor_inputs if k not in self._callback_tensor_inputs]}"
+                f'`callback_on_step_end_tensor_inputs` has to be in {self._callback_tensor_inputs}, but found {[k for k in callback_on_step_end_tensor_inputs if k not in self._callback_tensor_inputs]}'
             )
 
         if prompt is not None and prompt_embeds is not None:
             raise ValueError(
-                f"Cannot forward both `prompt`: {prompt} and `prompt_embeds`: {prompt_embeds}. Please make sure to"
-                " only forward one of the two."
+                f'Cannot forward both `prompt`: {prompt} and `prompt_embeds`: {prompt_embeds}. Please make sure to'
+                ' only forward one of the two.'
             )
         elif prompt_2 is not None and prompt_embeds is not None:
             raise ValueError(
-                f"Cannot forward both `prompt_2`: {prompt_2} and `prompt_embeds`: {prompt_embeds}. Please make sure to"
-                " only forward one of the two."
+                f'Cannot forward both `prompt_2`: {prompt_2} and `prompt_embeds`: {prompt_embeds}. Please make sure to'
+                ' only forward one of the two.'
             )
         elif prompt is None and prompt_embeds is None:
             raise ValueError(
-                "Provide either `prompt` or `prompt_embeds`. Cannot leave both `prompt` and `prompt_embeds` undefined."
+                'Provide either `prompt` or `prompt_embeds`. Cannot leave both `prompt` and `prompt_embeds` undefined.'
             )
-        elif prompt is not None and (
-            not isinstance(prompt, str) and not isinstance(prompt, list)
-        ):
-            raise ValueError(
-                f"`prompt` has to be of type `str` or `list` but is {type(prompt)}"
-            )
+        elif prompt is not None and (not isinstance(prompt, str) and not isinstance(prompt, list)):
+            raise ValueError(f'`prompt` has to be of type `str` or `list` but is {type(prompt)}')
         elif prompt_2 is not None and (
             not isinstance(prompt_2, str) and not isinstance(prompt_2, list)
         ):
             raise ValueError(
-                f"`prompt_2` has to be of type `str` or `list` but is {type(prompt_2)}"
+                f'`prompt_2` has to be of type `str` or `list` but is {type(prompt_2)}'
             )
 
         if prompt_embeds is not None and pooled_prompt_embeds is None:
             raise ValueError(
-                "If `prompt_embeds` are provided, `pooled_prompt_embeds` also have to be passed. Make sure to generate `pooled_prompt_embeds` from the same text encoder that was used to generate `prompt_embeds`."
+                'If `prompt_embeds` are provided, `pooled_prompt_embeds` also have to be passed. Make sure to generate `pooled_prompt_embeds` from the same text encoder that was used to generate `prompt_embeds`.'
             )
 
         if max_sequence_length is not None and max_sequence_length > 512:
             raise ValueError(
-                f"`max_sequence_length` cannot be greater than 512 but is {max_sequence_length}"
+                f'`max_sequence_length` cannot be greater than 512 but is {max_sequence_length}'
             )
 
     # Copied from diffusers.pipelines.flux.pipeline_flux._prepare_latent_image_ids
     @staticmethod
     def _prepare_latent_image_ids(batch_size, height, width, device, dtype):
         latent_image_ids = torch.zeros(height // 2, width // 2, 3)
-        latent_image_ids[..., 1] = (
-            latent_image_ids[..., 1] + torch.arange(height // 2)[:, None]
-        )
-        latent_image_ids[..., 2] = (
-            latent_image_ids[..., 2] + torch.arange(width // 2)[None, :]
-        )
+        latent_image_ids[..., 1] = latent_image_ids[..., 1] + torch.arange(height // 2)[:, None]
+        latent_image_ids[..., 2] = latent_image_ids[..., 2] + torch.arange(width // 2)[None, :]
 
         (
             latent_image_id_height,
@@ -539,9 +531,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
     # Copied from diffusers.pipelines.flux.pipeline_flux._pack_latents
     @staticmethod
     def _pack_latents(latents, batch_size, num_channels_latents, height, width):
-        latents = latents.view(
-            batch_size, num_channels_latents, height // 2, 2, width // 2, 2
-        )
+        latents = latents.view(batch_size, num_channels_latents, height // 2, 2, width // 2, 2)
         latents = latents.permute(0, 2, 4, 1, 3, 5)
         latents = latents.reshape(
             batch_size, (height // 2) * (width // 2), num_channels_latents * 4
@@ -560,9 +550,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         latents = latents.view(batch_size, height, width, channels // 4, 2, 2)
         latents = latents.permute(0, 3, 1, 4, 2, 5)
 
-        latents = latents.reshape(
-            batch_size, channels // (2 * 2), height * 2, width * 2
-        )
+        latents = latents.reshape(batch_size, channels // (2 * 2), height * 2, width * 2)
 
         return latents
 
@@ -591,18 +579,14 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
 
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
-                f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
-                f" size of {batch_size}. Make sure the batch size matches the length of the generators."
+                f'You have passed a list of generators of length {len(generator)}, but requested an effective batch'
+                f' size of {batch_size}. Make sure the batch size matches the length of the generators.'
             )
 
         latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
-        latents = self._pack_latents(
-            latents, batch_size, num_channels_latents, height, width
-        )
+        latents = self._pack_latents(latents, batch_size, num_channels_latents, height, width)
 
-        latent_image_ids = self._prepare_latent_image_ids(
-            batch_size, height, width, device, dtype
-        )
+        latent_image_ids = self._prepare_latent_image_ids(batch_size, height, width, device, dtype)
 
         return latents, latent_image_ids
 
@@ -646,7 +630,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         num_images_per_prompt,
         device,
         dtype,
-        do_classifier_free_guidance = False,
+        do_classifier_free_guidance=False,
     ):
         # Prepare image
         if isinstance(image, torch.Tensor):
@@ -697,7 +681,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             control_image.shape[2],
             control_image.shape[3],
         )
-        
+
         if do_classifier_free_guidance:
             packed_control_image = torch.cat([packed_control_image] * 2)
 
@@ -730,7 +714,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         num_inference_steps: int = 28,
         timesteps: List[int] = None,
         guidance_scale: float = 7.0,
-        true_guidance_scale: float = 3.5 ,
+        true_guidance_scale: float = 3.5,
         negative_prompt: Optional[Union[str, List[str]]] = None,
         negative_prompt_2: Optional[Union[str, List[str]]] = None,
         control_image: PipelineImageInput = None,
@@ -741,11 +725,11 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         latents: Optional[torch.FloatTensor] = None,
         prompt_embeds: Optional[torch.FloatTensor] = None,
         pooled_prompt_embeds: Optional[torch.FloatTensor] = None,
-        output_type: Optional[str] = "pil",
+        output_type: Optional[str] = 'pil',
         return_dict: bool = True,
         joint_attention_kwargs: Optional[Dict[str, Any]] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
-        callback_on_step_end_tensor_inputs: List[str] = ["latents"],
+        callback_on_step_end_tensor_inputs: List[str] = ['latents'],
         max_sequence_length: int = 512,
     ):
         r"""
@@ -849,35 +833,37 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
         dtype = self.transformer.dtype
 
         lora_scale = (
-            self.joint_attention_kwargs.get("scale", None)
+            self.joint_attention_kwargs.get('scale', None)
             if self.joint_attention_kwargs is not None
             else None
         )
-        (            
+        (
             prompt_embeds,
             pooled_prompt_embeds,
             negative_prompt_embeds,
             negative_pooled_prompt_embeds,
-            text_ids
+            text_ids,
         ) = self.encode_prompt(
             prompt=prompt,
             prompt_2=prompt_2,
             prompt_embeds=prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
-            do_classifier_free_guidance = self.do_classifier_free_guidance,
-            negative_prompt = negative_prompt,
-            negative_prompt_2 = negative_prompt_2,
+            do_classifier_free_guidance=self.do_classifier_free_guidance,
+            negative_prompt=negative_prompt,
+            negative_prompt_2=negative_prompt_2,
             device=device,
             num_images_per_prompt=num_images_per_prompt,
             max_sequence_length=max_sequence_length,
             lora_scale=lora_scale,
         )
-        
+
         # 在 encode_prompt 之后
         if self.do_classifier_free_guidance:
-            prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds], dim = 0)
-            pooled_prompt_embeds = torch.cat([negative_pooled_prompt_embeds, pooled_prompt_embeds], dim = 0)
-            text_ids = torch.cat([text_ids, text_ids], dim = 0)
+            prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds], dim=0)
+            pooled_prompt_embeds = torch.cat(
+                [negative_pooled_prompt_embeds, pooled_prompt_embeds], dim=0
+            )
+            text_ids = torch.cat([text_ids, text_ids], dim=0)
 
         # 3. Prepare control image
         num_channels_latents = self.transformer.config.in_channels // 4
@@ -906,7 +892,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             generator,
             latents,
         )
-        
+
         if self.do_classifier_free_guidance:
             latent_image_ids = torch.cat([latent_image_ids] * 2)
 
@@ -929,9 +915,7 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             mu=mu,
         )
 
-        num_warmup_steps = max(
-            len(timesteps) - num_inference_steps * self.scheduler.order, 0
-        )
+        num_warmup_steps = max(len(timesteps) - num_inference_steps * self.scheduler.order, 0)
         self._num_timesteps = len(timesteps)
 
         # 6. Denoising loop
@@ -939,8 +923,10 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
             for i, t in enumerate(timesteps):
                 if self.interrupt:
                     continue
-                
-                latent_model_input = torch.cat([latents] * 2) if self.do_classifier_free_guidance else latents
+
+                latent_model_input = (
+                    torch.cat([latents] * 2) if self.do_classifier_free_guidance else latents
+                )
 
                 # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
                 timestep = t.expand(latent_model_input.shape[0]).to(latent_model_input.dtype)
@@ -984,23 +970,25 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
                     controlnet_single_block_samples=[
                         sample.to(dtype=self.transformer.dtype)
                         for sample in controlnet_single_block_samples
-                    ] if controlnet_single_block_samples is not None else controlnet_single_block_samples,
+                    ]
+                    if controlnet_single_block_samples is not None
+                    else controlnet_single_block_samples,
                     txt_ids=text_ids,
                     img_ids=latent_image_ids,
                     joint_attention_kwargs=self.joint_attention_kwargs,
                     return_dict=False,
                 )[0]
-                
+
                 # 在生成循环中
                 if self.do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + true_guidance_scale * (noise_pred_text - noise_pred_uncond)
+                    noise_pred = noise_pred_uncond + true_guidance_scale * (
+                        noise_pred_text - noise_pred_uncond
+                    )
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents_dtype = latents.dtype
-                latents = self.scheduler.step(
-                    noise_pred, t, latents, return_dict=False
-                )[0]
+                latents = self.scheduler.step(noise_pred, t, latents, return_dict=False)[0]
 
                 if latents.dtype != latents_dtype:
                     if torch.backends.mps.is_available():
@@ -1013,8 +1001,8 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
                         callback_kwargs[k] = locals()[k]
                     callback_outputs = callback_on_step_end(self, i, t, callback_kwargs)
 
-                    latents = callback_outputs.pop("latents", latents)
-                    prompt_embeds = callback_outputs.pop("prompt_embeds", prompt_embeds)
+                    latents = callback_outputs.pop('latents', latents)
+                    prompt_embeds = callback_outputs.pop('prompt_embeds', prompt_embeds)
 
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or (
@@ -1025,16 +1013,12 @@ class FluxControlNetInpaintingPipeline(DiffusionPipeline, FluxLoraLoaderMixin):
                 if XLA_AVAILABLE:
                     xm.mark_step()
 
-        if output_type == "latent":
+        if output_type == 'latent':
             image = latents
 
         else:
-            latents = self._unpack_latents(
-                latents, height, width, self.vae_scale_factor
-            )
-            latents = (
-                latents / self.vae.config.scaling_factor
-            ) + self.vae.config.shift_factor
+            latents = self._unpack_latents(latents, height, width, self.vae_scale_factor)
+            latents = (latents / self.vae.config.scaling_factor) + self.vae.config.shift_factor
             latents = latents.to(self.vae.dtype)
 
             image = self.vae.decode(latents, return_dict=False)[0]

@@ -1,14 +1,13 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class DirsConfig:
-    iamges_dir: str = 'data/inpaint-images'
+    images_dir: str = 'data/inpaint-images'
     masks_dir: str = 'data/inpaint-masks'
-    inpainted_dir: str = 'data/inpaint'
-    generated_dir: str = 'data/generated-images'
-
+    inpainting_dir: str = 'data/inpaint'
+    generation_dir: str = 'data/generation-images'
 
 
 @dataclass(frozen=True)

@@ -22,6 +22,39 @@ jupyter = "^1.1.1"
 lab = "^8.3"
 
 
+[tool.ruff]
+line-length = 100
+# Assume Python 3.11
+target-version = "py311"
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "pypackages",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    ".ipynb",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.7.4"
 
@@ -34,8 +67,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff.lint]
 
 select = ["ALL"]
-
-
 ignore = [
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -85,6 +116,8 @@ ignore = [
     "FIX002", # Line contains TODO, consider resolving the issue
     
     "PLR0913", # Too many arguments in function definition (6 > 5)
+
+    # "Q000",
    
 ]
 

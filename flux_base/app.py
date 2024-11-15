@@ -19,14 +19,16 @@ from live_preview_helpers import (
 from transformers import CLIPTextModel, CLIPTokenizer, T5EncoderModel, T5TokenizerFast
 
 dtype = torch.bfloat16
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-taef1 = AutoencoderTiny.from_pretrained('madebyollin/taef1', torch_dtype=dtype).to(device)
+taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=dtype).to(
+    device
+)
 good_vae = AutoencoderKL.from_pretrained(
-    'black-forest-labs/FLUX.1-dev', subfolder='vae', torch_dtype=dtype
+    "black-forest-labs/FLUX.1-dev", subfolder="vae", torch_dtype=dtype
 ).to(device)
 pipe = DiffusionPipeline.from_pretrained(
-    'black-forest-labs/FLUX.1-dev', torch_dtype=dtype, vae=taef1
+    "black-forest-labs/FLUX.1-dev", torch_dtype=dtype, vae=taef1
 ).to(device)
 torch.cuda.empty_cache()
 
@@ -60,16 +62,16 @@ def infer(
         width=width,
         height=height,
         generator=generator,
-        output_type='pil',
+        output_type="pil",
         good_vae=good_vae,
     ):
         yield img, seed
 
 
 examples = [
-    'a tiny astronaut hatching from an egg on the moon',
-    'a cat holding a sign that says hello world',
-    'an anime illustration of a wiener schnitzel',
+    "a tiny astronaut hatching from an egg on the moon",
+    "a cat holding a sign that says hello world",
+    "an anime illustration of a wiener schnitzel",
 ]
 
 css = """
@@ -80,7 +82,7 @@ css = """
 """
 
 with gr.Blocks(css=css) as demo:
-    with gr.Column(elem_id='col-container'):
+    with gr.Column(elem_id="col-container"):
         gr.Markdown(f"""# FLUX.1 [dev]
 12B param rectified flow transformer guidance-distilled from [FLUX.1 [pro]](https://blackforestlabs.ai/)  
 [[non-commercial license](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)] [[blog](https://blackforestlabs.ai/announcing-black-forest-labs/)] [[model](https://huggingface.co/black-forest-labs/FLUX.1-dev)]
@@ -88,31 +90,31 @@ with gr.Blocks(css=css) as demo:
 
         with gr.Row():
             prompt = gr.Text(
-                label='Prompt',
+                label="Prompt",
                 show_label=False,
                 max_lines=1,
-                placeholder='Enter your prompt',
+                placeholder="Enter your prompt",
                 container=False,
             )
 
-            run_button = gr.Button('Run', scale=0)
+            run_button = gr.Button("Run", scale=0)
 
-        result = gr.Image(label='Result', show_label=False)
+        result = gr.Image(label="Result", show_label=False)
 
-        with gr.Accordion('Advanced Settings', open=False):
+        with gr.Accordion("Advanced Settings", open=False):
             seed = gr.Slider(
-                label='Seed',
+                label="Seed",
                 minimum=0,
                 maximum=MAX_SEED,
                 step=1,
                 value=0,
             )
 
-            randomize_seed = gr.Checkbox(label='Randomize seed', value=True)
+            randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
 
             with gr.Row():
                 width = gr.Slider(
-                    label='Width',
+                    label="Width",
                     minimum=256,
                     maximum=MAX_IMAGE_SIZE,
                     step=32,
@@ -120,7 +122,7 @@ with gr.Blocks(css=css) as demo:
                 )
 
                 height = gr.Slider(
-                    label='Height',
+                    label="Height",
                     minimum=256,
                     maximum=MAX_IMAGE_SIZE,
                     step=32,
@@ -129,7 +131,7 @@ with gr.Blocks(css=css) as demo:
 
             with gr.Row():
                 guidance_scale = gr.Slider(
-                    label='Guidance Scale',
+                    label="Guidance Scale",
                     minimum=1,
                     maximum=15,
                     step=0.1,
@@ -137,7 +139,7 @@ with gr.Blocks(css=css) as demo:
                 )
 
                 num_inference_steps = gr.Slider(
-                    label='Number of inference steps',
+                    label="Number of inference steps",
                     minimum=1,
                     maximum=50,
                     step=1,
@@ -149,13 +151,21 @@ with gr.Blocks(css=css) as demo:
             fn=infer,
             inputs=[prompt],
             outputs=[result, seed],
-            cache_examples='lazy',
+            cache_examples="lazy",
         )
 
     gr.on(
         triggers=[run_button.click, prompt.submit],
         fn=infer,
-        inputs=[prompt, seed, randomize_seed, width, height, guidance_scale, num_inference_steps],
+        inputs=[
+            prompt,
+            seed,
+            randomize_seed,
+            width,
+            height,
+            guidance_scale,
+            num_inference_steps,
+        ],
         outputs=[result, seed],
     )
 
