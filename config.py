@@ -8,6 +8,8 @@ class DirsConfig:
     masks_dir: str = 'data/inpaint-masks'
     inpainting_dir: str = 'data/inpaint'
     generation_dir: str = 'data/generation-images'
+    canny_dir: str = 'data/canny-images'
+    canny_base_dir: str = 'data/canny-base'
 
 
 @dataclass(frozen=True)

@@ -12,7 +12,7 @@ from flux_inpaint.transformer_flux import FluxTransformer2DModel
 check_min_version('0.30.2')
 
 
-def get_model_pipe() -> None:
+def get_model_pipe() -> FluxControlNetInpaintingPipeline:
     controlnet = FluxControlNetModel.from_pretrained(
         'alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha', torch_dtype=torch.bfloat16
     )

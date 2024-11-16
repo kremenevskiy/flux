@@ -8,6 +8,7 @@ import config
 import model_manager as manager
 import utils
 from flux_base import flux_generate
+from flux_canny import flux_canny
 from flux_inpaint import flux_inpaint
 
 app = FastAPI()
@@ -71,6 +72,41 @@ async def flux_inpaint_image(
         path=str(inpainted_img_path),
         media_type='image/jpeg',
         filename=f'processed_{inpainted_img_path.name}',
+    )
+
+
+@app.post('/flux-canny-image/')
+async def flux_canny_image(
+    prompt: str = Form(...),
+    image: UploadFile = File(...),  # noqa: B008
+    seed: int = Form(0),
+) -> FileResponse:
+    base_img_path = (
+        Path(config.config.dirs.canny_base_dir)
+        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+    )
+
+    canny_img_path = (
+        Path(config.config.dirs.canny_dir)
+        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+    )
+
+    with base_img_path.open('wb') as file:
+        file.write(await image.read())
+
+    flux_canny.create_canny(
+        prompt=prompt,
+        control_image_path=base_img_path,
+        save_path=str(canny_img_path),
+        model_manager=model_manager,
+        seed=seed,
+    )
+
+    # Return the processed file as a response
+    return FileResponse(
+        path=str(canny_img_path),
+        media_type='image/jpeg',
+        filename=f'processed_{canny_img_path.name}',
     )
 
 

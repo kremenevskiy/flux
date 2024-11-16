@@ -21,6 +21,8 @@ class ModelManager:
             self.model = self.load_flux_generate_model()
         elif model_name == 'flux_inpaint':
             self.model = self.load_flux_inpaint_model()
+        elif model_name == 'flux_canny':
+            self.model = self.load_flux_canny_model()
         else:
             raise ValueError(f'Unknown model name: {model_name}')
         self.current_model_name = model_name
@@ -35,14 +37,21 @@ class ModelManager:
 
     def load_flux_generate_model(self):
         # Load the flux_generate model
-        from flux_base.flux_generate import get_pipeline
+        from flux_base.flux_generate import get_model_pipe
 
-        pipe, good_vae = get_pipeline()
+        pipe, good_vae = get_model_pipe()
         return (pipe, good_vae)
 
     def load_flux_inpaint_model(self):
         # Load the flux_inpaint model
         from flux_inpaint.flux_inpaint import get_model_pipe
+
+        pipe = get_model_pipe()
+        return pipe
+
+    def load_flux_canny_model(self):
+        # Load the flux_inpaint model
+        from flux_canny.flux_canny import get_model_pipe
 
         pipe = get_model_pipe()
         return pipe

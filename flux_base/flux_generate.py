@@ -21,7 +21,7 @@ from flux_base.live_preview_helpers import (
 )
 
 
-def get_pipeline():
+def get_model_pipe():
     dtype = torch.float16
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
