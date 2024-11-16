@@ -17,10 +17,11 @@ model_manager = manager.ModelManager()
 
 @app.post('/flux-generate-image/')
 async def flux_generate_image(
-    prompt: str = Form(...),
-    seed: int = Form(0),
+    prompt: str = Form(...), seed: int = Form(0), width: int = Form(1024), height: int = Form(1024)
 ) -> FileResponse:
-    img = flux_generate.infer(prompt=prompt, seed=seed, model_manager=model_manager)
+    img = flux_generate.infer(
+        prompt=prompt, model_manager=model_manager, width=width, height=height, seed=seed
+    )
     img_save_path = Path(config.config.dirs.generation_dir) / f'{utils.get_hash_from_uuid}.png'
     img.save(img_save_path)
 
