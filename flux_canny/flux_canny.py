@@ -76,8 +76,7 @@ def create_canny(
     if not os.path.isdir('./controlnet_results/'):
         os.makedirs('./controlnet_results/')
 
-    model, t5, clip, ae, controlnet, is_schnell = get_model_pipe()
-    pipe = model_manager.get_model(model_name='flux_canny')
+    model, t5, clip, ae, controlnet, is_schnell = model_manager.get_model(model_name='flux_canny')
     width = 16 * width // 16
     height = 16 * height // 16
     timesteps = get_schedule(
