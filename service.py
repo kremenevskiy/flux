@@ -42,15 +42,15 @@ async def flux_inpaint_image(
 ) -> FileResponse:
     base_img_path = (
         Path(config.config.dirs.images_dir)
-        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+        / f'{utils.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
     mask_img_path = (
         Path(config.config.dirs.masks_dir)
-        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+        / f'{utils.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
     inpainted_img_path = (
         Path(config.config.dirs.inpainting_dir)
-        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+        / f'{utils.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
 
     with base_img_path.open('wb') as file:
@@ -80,15 +80,19 @@ async def flux_canny_image(
     prompt: str = Form(...),
     image: UploadFile = File(...),  # noqa: B008
     seed: int = Form(0),
+    num_steps: int = Form(50),
+    guidance: float = Form(4.0),
+    canny_guidance: float = Form(0.7),
+    
 ) -> FileResponse:
     base_img_path = (
         Path(config.config.dirs.canny_base_dir)
-        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+        / f'{utils.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
 
     canny_img_path = (
         Path(config.config.dirs.canny_dir)
-        / f'{utils.get_hash_from_uuid}{Path(image.filename).suffix}'
+        / f'{utils.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
 
     with base_img_path.open('wb') as file:
@@ -100,6 +104,9 @@ async def flux_canny_image(
         save_path=str(canny_img_path),
         model_manager=model_manager,
         seed=seed,
+        num_steps=num_steps,
+        guidance=guidance,
+        canny_guidance=canny_guidance,
     )
 
     # Return the processed file as a response

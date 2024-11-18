@@ -151,9 +151,9 @@ def generate_image(prompt, control_image, num_steps=50, guidance=4, width=512, h
 
     meta = {
         'prompt': prompt,
-        'control_image_path': control_image_save_path,
-        'canny_path': canny_image_save_path,
-        'result_path': result_image_save_path,
+        'control_image_path': str(control_image_save_path),
+        'canny_path': str(canny_image_save_path),
+        'result_path': str(result_image_save_path),
         'num_steps': num_steps,
         'guidance': guidance,
         'controlnet_gs': controlnet_gs,
