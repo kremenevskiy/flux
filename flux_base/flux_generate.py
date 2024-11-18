@@ -48,7 +48,7 @@ def infer(
     prompt: str,
     model_manager: model_manager.ModelManager,
     seed: int = 42,
-    randomize_seed: bool = False,
+    randomize_seed: bool = True,
     width: int = 1024,
     height: int = 1024,
     guidance_scale: float = 3.5,

@@ -83,6 +83,8 @@ async def flux_canny_image(
     num_steps: int = Form(50),
     guidance: float = Form(4.0),
     canny_guidance: float = Form(0.7),
+    width: int | None = Form(None),
+    height: int | None = Form(None),
     
 ) -> FileResponse:
     base_img_path = (
@@ -107,6 +109,8 @@ async def flux_canny_image(
         num_steps=num_steps,
         guidance=guidance,
         canny_guidance=canny_guidance,
+        width=width,
+        height=height,
     )
 
     # Return the processed file as a response

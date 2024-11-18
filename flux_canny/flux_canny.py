@@ -5,6 +5,7 @@ import requests
 import torch
 from einops import rearrange
 from PIL import Image
+import utils
 
 import model_manager
 from flux_canny.image_datasets.canny_dataset import c_crop, canny_processor
@@ -66,18 +67,21 @@ def create_canny(
     seed: int = 24,
     width: int | None = None,
     height: int | None = None,
-    controlnet_gs: float = 0.7
+    canny_guidance: float = 0.7
 ) -> None:
     
     meta = {
         'num_steps': num_steps,
         'guidance': guidance,
-        'controlnet_gs': controlnet_gs,
+        'controlnet_gs': canny_guidance,
     }
     print('params: ', meta)
+
     
     control_image = Image.open(control_image_path)
+    control_image = utils.resize_to_nearest_multiple(image=control_image)
     control_image.save('default.png')
+
 
     width, height = control_image.size if (width is None and height is None) else (width, height)
     torch_device = torch.device('cuda')
@@ -111,6 +115,7 @@ def create_canny(
             timesteps=timesteps,
             guidance=guidance,
             controlnet_cond=controlnet_cond,
+            controlnet_gs=canny_guidance,
         )
 
         x = unpack(x.float(), height, width)
