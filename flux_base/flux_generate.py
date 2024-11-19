@@ -54,7 +54,7 @@ def infer(
     guidance_scale: float = 3.5,
     num_inference_steps: int = 28,
 ) -> Image.Image:
-    if randomize_seed:
+    if randomize_seed and seed == 0:
         seed = random.randint(0, 10000)
     generator = torch.Generator().manual_seed(seed)
 
@@ -62,6 +62,12 @@ def infer(
     if model_manager is None:
         raise ValueError('Model manager is required')
     pipe, good_vae = model_manager.get_model('flux_generate')
+    meta = {
+        'seed': seed,
+        'guidance_scale': guidance_scale,
+        'num_inference_steps': num_inference_steps,
+    }
+    print('params: ', meta)
 
     for img in pipe.flux_pipe_call_that_returns_an_iterable_of_images(
         prompt=prompt,

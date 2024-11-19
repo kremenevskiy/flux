@@ -18,10 +18,21 @@ model_manager = manager.ModelManager()
 
 @app.post('/flux-generate-image/')
 async def flux_generate_image(
-    prompt: str = Form(...), seed: int = Form(0), width: int = Form(1024), height: int = Form(1024)
+    prompt: str = Form(...),
+    guidance_scale: float = Form(3.5),
+    num_inference_steps: int = Form(28),
+    seed: int = Form(0),
+    width: int = Form(1024),
+    height: int = Form(1024),
 ) -> FileResponse:
     img = flux_generate.infer(
-        prompt=prompt, model_manager=model_manager, width=width, height=height, seed=seed
+        prompt=prompt,
+        model_manager=model_manager,
+        width=width,
+        height=height,
+        seed=seed,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
     )
     img_save_path = Path(config.config.dirs.generation_dir) / f'{utils.get_hash_from_uuid}.png'
     img.save(img_save_path)
@@ -83,9 +94,6 @@ async def flux_canny_image(
     num_steps: int = Form(50),
     guidance: float = Form(4.0),
     canny_guidance: float = Form(0.7),
-    width: int | None = Form(None),
-    height: int | None = Form(None),
-    
 ) -> FileResponse:
     base_img_path = (
         Path(config.config.dirs.canny_base_dir)
@@ -109,8 +117,6 @@ async def flux_canny_image(
         num_steps=num_steps,
         guidance=guidance,
         canny_guidance=canny_guidance,
-        width=width,
-        height=height,
     )
 
     # Return the processed file as a response

@@ -9,6 +9,7 @@ class DirsConfig:
     inpainting_dir: str = 'data/inpaint'
     generation_dir: str = 'data/generation-images'
     canny_dir: str = 'data/canny-images'
+    canny_processed_dir: str = 'data/canny_processed_images'
     canny_base_dir: str = 'data/canny-base'
 
 

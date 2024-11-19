@@ -1,4 +1,5 @@
 *.jpg
+*.jpeg
 *.png
 *.ipynb_checkpoints
 *.env
