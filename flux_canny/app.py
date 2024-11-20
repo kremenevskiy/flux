@@ -117,6 +117,7 @@ def generate_image(
     height=512,
     seed=42,
     random_seed=False,
+    controlnet_gs=0.7,
 ):
     if random_seed:
         seed = np.random.randint(0, 10000)
@@ -154,6 +155,7 @@ def generate_image(
             timesteps=timesteps,
             guidance=guidance,
             controlnet_cond=controlnet_cond,
+            controlnet_gs=controlnet_gs,
         )
 
         x = unpack(x.float(), height, width)
@@ -206,6 +208,7 @@ interface = gr.Interface(
         gr.Slider(minimum=0, maximum=9999999, step=1, value=42, label='Seed'),
         #       gr.Number(value=42, label="Seed"),
         gr.Checkbox(label='Random Seed'),
+        gr.Slider(minimum=0, maximum=2, value=0.7, label='controlnet_gs'),
     ],
     outputs=ImageSlider(label='Before / After'),  # Use ImageSlider as the output
     title='FLUX.1 Controlnet Canny',
