@@ -1,43 +1,17 @@
 import json
-import os
 from pathlib import Path
 
 import gradio as gr
 import numpy as np
 import requests
-import torch
-from einops import rearrange
 from gradio_imageslider import ImageSlider  # Import ImageSlider
 
 # import spaces
-from huggingface_hub import login
 from image_datasets.canny_dataset import c_crop, canny_processor
 from PIL import Image
 from src.flux.sampling import denoise_controlnet, get_noise, get_schedule, prepare, unpack
-from src.flux.util import (
-    load_ae,
-    load_clip,
-    load_controlnet,
-    load_flow_model,
-    load_safetensors,
-    load_t5,
-)
 
 import utils
-
-# Download and load the ControlNet model
-model_url = 'https://huggingface.co/XLabs-AI/flux-controlnet-canny-v3/resolve/main/flux-canny-controlnet-v3.safetensors?download=true'
-model_path = './flux-canny-controlnet-v3.safetensors'
-if not os.path.exists(model_path):
-    response = requests.get(model_url)
-    with open(model_path, 'wb') as f:
-        f.write(response.content)
-
-# Source: https://github.com/XLabs-AI/x-flux.git
-name = 'flux-dev'
-device = torch.device('cuda')
-offload = False
-is_schnell = name == 'flux-schnell'
 
 
 def preprocess_image(image, target_width, target_height, crop=True):
@@ -90,21 +64,62 @@ def resize_to_nearest_multiple(image: Image.Image, divisor: int = 16) -> Image.I
     return resized_image
 
 
-torch_device = torch.device('cuda')
+FLUX_SERVER_ENDPOINT = 'http://38.29.145.18:40919/flux-canny-image'
+FLUX_TIMEOUT = 300
 
-torch.cuda.empty_cache()  # Clear GPU cache
 
-model = load_flow_model(name, device=torch_device)
-t5 = load_t5(torch_device, max_length=256 if is_schnell else 512)
-clip = load_clip(torch_device)
-ae = load_ae(name, device=torch_device)
-controlnet = load_controlnet(name, torch_device).to(torch_device).to(torch.bfloat16)
+def flux_get_image_from_canny(
+    prompt: str,
+    image_path: str,
+    save_path: str,
+    seed: int = 24,
+    num_steps: int = 50,
+    guidance: float = 4.0,
+    canny_guidance: float = 0.7,
+) -> str:
+    with Path(image_path).open('rb') as image_file:
+        files = {
+            'image': (Path(image_path).name, image_file, 'image/jpeg'),  # Main image file
+        }
+        data = {
+            'prompt': prompt,
+            'seed': seed,
+            'num_steps': num_steps,
+            'guidance': guidance,
+            'canny_guidance': canny_guidance,
+        }
 
-checkpoint = load_safetensors(model_path)
-controlnet.load_state_dict(checkpoint, strict=False)
+        response = requests.post(
+            FLUX_SERVER_ENDPOINT,
+            files=files,
+            data=data,
+            timeout=FLUX_TIMEOUT,
+        )
 
-res_dir = 'gradio_data_v2'
-Path(res_dir).mkdir(parents=True, exist_ok=True)
+        if response.status_code == 200:
+            with Path(save_path).open('wb') as output_file:
+                output_file.write(response.content)
+
+        # unique_dir = utils.get_hash_from_uuid(hash_len=7)
+        # gen_dir = Path(res_dir) / unique_dir
+        # gen_dir.mkdir(parents=True, exist_ok=True)
+
+        # control_image_save_path = gen_dir / 'contol_image.png'
+        # result_image_save_path = gen_dir / 'result.png'
+
+        # control_image = Image.open(image_path)
+        # control_image.save(control_image_save_path)
+        # output_img = Image.open(save_path)
+        # output_img.save(result_image_save_path)
+
+        # meta_json_path = gen_dir / 'meta.json'
+        # with open(meta_json_path, 'w') as json_file:
+        #     json.dump(data, json_file, indent=4)
+
+        return save_path
+
+
+res_dir = 'gradio_dir'
 
 
 # @spaces.GPU(duration=120)
@@ -117,63 +132,43 @@ def generate_image(
     height=512,
     seed=42,
     random_seed=False,
+    controlnet_gs=0.7,
 ):
     if random_seed:
         seed = np.random.randint(0, 10000)
-    print('seed: ', seed)
-    control_image = resize_to_nearest_multiple(image=control_image, divisor=16)
-
-    if width == 512 and height == 512:
-        width, height = control_image.size
-
-    if not os.path.isdir('./controlnet_results/'):
-        os.makedirs('./controlnet_results/')
-
-    width = 16 * width // 16
-    height = 16 * height // 16
-    timesteps = get_schedule(
-        num_steps, (width // 8) * (height // 8) // (16 * 16), shift=(not is_schnell)
-    )
-
-    processed_input = preprocess_image(control_image, width, height)
-    canny_processed = preprocess_canny_image(control_image, width, height, crop=False)
-    controlnet_cond = torch.from_numpy((np.array(canny_processed) / 127.5) - 1)
-    controlnet_cond = (
-        controlnet_cond.permute(2, 0, 1).unsqueeze(0).to(torch.bfloat16).to(torch_device)
-    )
-
-    torch.manual_seed(seed)
-    with torch.no_grad():
-        x = get_noise(1, height, width, device=torch_device, dtype=torch.bfloat16, seed=seed)
-        inp_cond = prepare(t5=t5, clip=clip, img=x, prompt=prompt)
-
-        x = denoise_controlnet(
-            model,
-            **inp_cond,
-            controlnet=controlnet,
-            timesteps=timesteps,
-            guidance=guidance,
-            controlnet_cond=controlnet_cond,
-        )
-
-        x = unpack(x.float(), height, width)
-        x = ae.decode(x)
-
-    x1 = x.clamp(-1, 1)
-    x1 = rearrange(x1[-1], 'c h w -> h w c')
-    output_img = Image.fromarray((127.5 * (x1 + 1.0)).cpu().byte().numpy())
 
     unique_dir = utils.get_hash_from_uuid(hash_len=7)
     gen_dir = Path(res_dir) / unique_dir
     gen_dir.mkdir(parents=True, exist_ok=True)
+    control_image_save_path = gen_dir / 'contol_image.png'
+
+    if width == 512 and height == 512:
+        width, height = control_image.size
+    else:
+        control_image = control_image.resize((width, height))
+        control_image.save(control_image_save_path)
+
+    control_image = resize_to_nearest_multiple(image=control_image, divisor=16)
+
+    canny_processed_tmp = preprocess_canny_image(control_image, width, height, crop=False)
 
     control_image_save_path = gen_dir / 'contol_image.png'
     canny_image_save_path = gen_dir / 'canny.png'
     result_image_save_path = gen_dir / 'result.png'
 
     control_image.save(control_image_save_path)
-    canny_processed.save(canny_image_save_path)
-    output_img.save(result_image_save_path)
+    canny_processed_tmp.save(canny_image_save_path)
+
+    flux_get_image_from_canny(
+        prompt=prompt,
+        image_path=control_image_save_path,
+        save_path=result_image_save_path,
+        seed=seed,
+        num_steps=num_steps,
+        guidance=guidance,
+        canny_guidance=controlnet_gs,
+    )
+    output_img = Image.open(result_image_save_path)
 
     meta = {
         'prompt': prompt,
@@ -182,6 +177,7 @@ def generate_image(
         'result_path': str(result_image_save_path),
         'num_steps': num_steps,
         'guidance': guidance,
+        'controlnet_gs': controlnet_gs,
         'width': width,
         'height': height,
         'seed': seed,
@@ -191,7 +187,7 @@ def generate_image(
     with open(meta_json_path, 'w') as json_file:
         json.dump(meta, json_file, indent=4)
 
-    return [canny_processed, output_img]  # Return both images for slider
+    return [canny_processed_tmp, output_img]  # Return both images for slider
 
 
 interface = gr.Interface(
@@ -206,6 +202,7 @@ interface = gr.Interface(
         gr.Slider(minimum=0, maximum=9999999, step=1, value=42, label='Seed'),
         #       gr.Number(value=42, label="Seed"),
         gr.Checkbox(label='Random Seed'),
+        gr.Slider(minimum=0, maximum=2, value=0.7, label='controlnet_gs'),
     ],
     outputs=ImageSlider(label='Before / After'),  # Use ImageSlider as the output
     title='FLUX.1 Controlnet Canny',
