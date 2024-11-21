@@ -187,7 +187,7 @@ def generate_image(
     with open(meta_json_path, 'w') as json_file:
         json.dump(meta, json_file, indent=4)
 
-    return [canny_processed_tmp, output_img]  # Return both images for slider
+    return canny_processed_tmp, [canny_processed_tmp, output_img]  # Return both images for slider
 
 
 interface = gr.Interface(
@@ -204,7 +204,10 @@ interface = gr.Interface(
         gr.Checkbox(label='Random Seed'),
         gr.Slider(minimum=0, maximum=2, value=0.7, label='controlnet_gs'),
     ],
-    outputs=ImageSlider(label='Before / After'),  # Use ImageSlider as the output
+    outputs=[
+        gr.Image(label='Canny Image'),
+        ImageSlider(label='Before / After'),
+    ],  # Use ImageSlider as the output
     title='FLUX.1 Controlnet Canny',
     description='Generate images using ControlNet and a text prompt.\n[[non-commercial license, Flux.1 Dev](https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/LICENSE.md)]',
 )
