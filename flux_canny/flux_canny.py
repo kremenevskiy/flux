@@ -7,7 +7,7 @@ from einops import rearrange
 from PIL import Image
 
 import model_manager
-import utils
+import utils_service
 from flux_canny.image_datasets.canny_dataset import c_crop, canny_processor
 from flux_canny.src.flux.sampling import (
     denoise_controlnet,
@@ -77,7 +77,7 @@ def create_canny(
     print('params: ', meta)
 
     control_image = Image.open(control_image_path)
-    control_image = utils.resize_to_nearest_multiple(image=control_image)
+    control_image = utils_service.resize_to_nearest_multiple(image=control_image)
     control_image.save('default.png')
 
     width, height = control_image.size if (width is None and height is None) else (width, height)
