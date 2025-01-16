@@ -5,6 +5,9 @@ from typing import Any, Mapping, Sequence, Union
 
 import torch
 import torchvision
+from PIL import Image
+
+import utils_service
 
 
 def get_value_at_index(obj: Union[Sequence, Mapping], index: int) -> Any:
@@ -134,11 +137,18 @@ def infer(
     save_path: str,
     seed: int = 42,
     randomize_seed: bool = True,
-    width: int = 1024,
-    height: int = 1024,
+    width: int | None = None,
+    height: int | None = None,
     guidance_scale: float = 3.5,
     num_inference_steps: int = 20,
 ) -> torch.Tensor:
+    control_image = Image.open(control_image_path)
+    control_image = utils_service.resize_to_nearest_multiple(image=control_image)
+    control_image.save(control_image_path)
+
+    width, height = control_image.size if (width is None and height is None) else (width, height)
+    print('set width and height: ', width, height)
+
     import_custom_nodes()
     with torch.inference_mode():
         dualcliploader = NODE_CLASS_MAPPINGS['DualCLIPLoader']()
@@ -214,7 +224,7 @@ def infer(
             )
 
             xlabssampler_3 = xlabssampler.sampling(
-                noise_seed=random.randint(1, 2**64),
+                noise_seed=49,
                 steps=num_inference_steps,
                 timestep_to_start_cfg=1,
                 true_gs=guidance_scale,
@@ -232,10 +242,8 @@ def infer(
                 vae=get_value_at_index(vaeloader_8, 0),
             )
 
-            print(type(get_value_at_index(vaedecode_7, 0)))
             img_pt = get_value_at_index(vaedecode_7, 0)
             img_pt = img_pt.squeeze(0)
-            print('shape: ', img_pt.shape)
             img_pt = img_pt.permute(2, 0, 1)
             torchvision.utils.save_image(img_pt, save_path)
             return img_pt
@@ -243,14 +251,12 @@ def infer(
 
 
 if __name__ == '__main__':
-    sv_path = '/root/ComfyUI/im.png'
-    cntrl_pth = (
-        '/root/flux/data/generation-images/<function get_hash_from_uuid at 0x7f5d864ab740>.png'
-    )
+    sv_path = '/root/test_im.png'
+    cntrl_pth = '/root/flux/data/canny-base/0facd.png'
     infer(
-        prompt='golden frame',
+        prompt='Create a rectangular frame for a slot machine in a steampunk style. The frame should be decorated with intricate gears, cogs, pipes, and steam vents, along with metallic textures like brass, copper, and iron. Incorporate Victorian-inspired design elements such as ornate patterns, rivets, clocks, and goggles. Add subtle details like glowing tubes, pressure gauges, and vintage levers for a mechanical and industrial aesthetic. The frame should be isolated on a plain white background, with the area both inside and outside of the frame completely white',
         control_image_path=cntrl_pth,
         save_path=sv_path,
-        width=1024,
-        height=512,
+        width=None,
+        height=None,
     )
