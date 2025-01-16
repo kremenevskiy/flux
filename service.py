@@ -10,7 +10,7 @@ import utils_service
 from flux_base import flux_generate
 from flux_canny import flux_canny
 from flux_inpaint import flux_inpaint
-from flux_lora import comfy_inf, inference_lora
+from flux_lora import comfy_inf, comfy_inf_2, inference_lora
 
 app = FastAPI()
 
@@ -111,7 +111,7 @@ async def flux_canny_image(
     with base_img_path.open('wb') as file:
         file.write(await image.read())
 
-    comfy_inf.create_canny(
+    flux_canny.create_canny(
         prompt=prompt,
         control_image_path=base_img_path,
         save_path=str(canny_img_path),
@@ -183,11 +183,11 @@ async def flux_canny_image(
     with base_img_path.open('wb') as file:
         file.write(await image.read())
 
-    comfy_inf.infer(
+    comfy_inf_2.infer(
         prompt=prompt,
         control_image_path=str(base_img_path.resolve()),
         save_path=str(canny_img_path),
-        # model_manager=model_manager,
+        model_manager=model_manager,
         seed=seed,
         num_inference_steps=num_steps,
         guidance_scale=guidance,

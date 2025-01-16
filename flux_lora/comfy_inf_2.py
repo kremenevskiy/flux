@@ -7,6 +7,7 @@ import torch
 import torchvision
 from PIL import Image
 
+import model_manager
 import utils_service
 
 
@@ -122,13 +123,65 @@ from nodes import NODE_CLASS_MAPPINGS
 
 
 def get_model_pipe():
-    pass
+    dualcliploader = NODE_CLASS_MAPPINGS['DualCLIPLoader']()
+    dualcliploader_4 = dualcliploader.load_clip(
+        clip_name1='clip_l.safetensors',
+        clip_name2='t5xxl_fp16.safetensors',
+        type='flux',
+        device='default',
+    )
+
+    unetloader = NODE_CLASS_MAPPINGS['UNETLoader']()
+    unetloader_10 = unetloader.load_unet(unet_name='flux1-dev.safetensors', weight_dtype='default')
+
+    loraloader = NODE_CLASS_MAPPINGS['LoraLoader']()
+    loraloader_23 = loraloader.load_lora(
+        lora_name='frames_lora_1.safetensors',
+        strength_model=0.8,
+        strength_clip=1,
+        model=get_value_at_index(unetloader_10, 0),
+        clip=get_value_at_index(dualcliploader_4, 0),
+    )
+
+    cliptextencodeflux = NODE_CLASS_MAPPINGS['CLIPTextEncodeFlux']()
+    emptylatentimage = NODE_CLASS_MAPPINGS['EmptyLatentImage']()
+
+    vaeloader = NODE_CLASS_MAPPINGS['VAELoader']()
+    vaeloader_8 = vaeloader.load_vae(vae_name='ae.safetensors')
+
+    loadfluxcontrolnet = NODE_CLASS_MAPPINGS['LoadFluxControlNet']()
+    loadfluxcontrolnet_13 = loadfluxcontrolnet.loadmodel(
+        model_name='flux-dev',
+        controlnet_path='flux-canny-controlnet-v3.safetensors',
+    )
+
+    loadimage = NODE_CLASS_MAPPINGS['LoadImage']()
+
+    cannyedgepreprocessor = NODE_CLASS_MAPPINGS['CannyEdgePreprocessor']()
+    applyfluxcontrolnet = NODE_CLASS_MAPPINGS['ApplyFluxControlNet']()
+    xlabssampler = NODE_CLASS_MAPPINGS['XlabsSampler']()
+    vaedecode = NODE_CLASS_MAPPINGS['VAEDecode']()
+
+    return (
+        cliptextencodeflux,
+        loraloader_23,
+        emptylatentimage,
+        loadimage,
+        cannyedgepreprocessor,
+        applyfluxcontrolnet,
+        loadfluxcontrolnet_13,
+        xlabssampler,
+        vaedecode,
+        vaeloader_8,
+        dualcliploader_4,
+    )
 
 
 def infer(
     prompt: str,
     control_image_path: str,
     save_path: str,
+    model_manager: model_manager.ModelManager,
     seed: int = 42,
     randomize_seed: bool = True,
     width: int | None = None,
@@ -145,29 +198,20 @@ def infer(
 
     import_custom_nodes()
     with torch.inference_mode():
-        dualcliploader = NODE_CLASS_MAPPINGS['DualCLIPLoader']()
-        dualcliploader_4 = dualcliploader.load_clip(
-            clip_name1='clip_l.safetensors',
-            clip_name2='t5xxl_fp16.safetensors',
-            type='flux',
-            device='default',
-        )
+        (
+            cliptextencodeflux,
+            loraloader_23,
+            emptylatentimage,
+            loadimage,
+            cannyedgepreprocessor,
+            applyfluxcontrolnet,
+            loadfluxcontrolnet_13,
+            xlabssampler,
+            vaedecode,
+            vaeloader_8,
+            dualcliploader_4,
+        ) = model_manager.get_model(model_name='flux_lora_canny')
 
-        unetloader = NODE_CLASS_MAPPINGS['UNETLoader']()
-        unetloader_10 = unetloader.load_unet(
-            unet_name='flux1-dev.safetensors', weight_dtype='default'
-        )
-
-        loraloader = NODE_CLASS_MAPPINGS['LoraLoader']()
-        loraloader_23 = loraloader.load_lora(
-            lora_name='frames_lora_1.safetensors',
-            strength_model=0.8,
-            strength_clip=1,
-            model=get_value_at_index(unetloader_10, 0),
-            clip=get_value_at_index(dualcliploader_4, 0),
-        )
-
-        cliptextencodeflux = NODE_CLASS_MAPPINGS['CLIPTextEncodeFlux']()
         cliptextencodeflux_5 = cliptextencodeflux.encode(
             clip_l=prompt,
             t5xxl=prompt,
@@ -175,19 +219,8 @@ def infer(
             clip=get_value_at_index(loraloader_23, 1),
         )
 
-        emptylatentimage = NODE_CLASS_MAPPINGS['EmptyLatentImage']()
         emptylatentimage_6 = emptylatentimage.generate(width=width, height=height, batch_size=1)
 
-        vaeloader = NODE_CLASS_MAPPINGS['VAELoader']()
-        vaeloader_8 = vaeloader.load_vae(vae_name='ae.safetensors')
-
-        loadfluxcontrolnet = NODE_CLASS_MAPPINGS['LoadFluxControlNet']()
-        loadfluxcontrolnet_13 = loadfluxcontrolnet.loadmodel(
-            model_name='flux-dev',
-            controlnet_path='flux-canny-controlnet-v3.safetensors',
-        )
-
-        loadimage = NODE_CLASS_MAPPINGS['LoadImage']()
         loadimage_16 = loadimage.load_image(image=control_image_path)
 
         cliptextencodeflux_19 = cliptextencodeflux.encode(
@@ -196,12 +229,6 @@ def infer(
             guidance=4,
             clip=get_value_at_index(dualcliploader_4, 0),
         )
-
-        cannyedgepreprocessor = NODE_CLASS_MAPPINGS['CannyEdgePreprocessor']()
-        applyfluxcontrolnet = NODE_CLASS_MAPPINGS['ApplyFluxControlNet']()
-        xlabssampler = NODE_CLASS_MAPPINGS['XlabsSampler']()
-        vaedecode = NODE_CLASS_MAPPINGS['VAEDecode']()
-        saveimage = NODE_CLASS_MAPPINGS['SaveImage']()
 
         for q in range(1):
             cannyedgepreprocessor_15 = cannyedgepreprocessor.execute(

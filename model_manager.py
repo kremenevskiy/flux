@@ -25,6 +25,8 @@ class ModelManager:
             self.model = self.load_flux_canny_model()
         elif model_name == 'flux_lora':
             self.model = self.load_flux_lora_model()
+        elif model_name == 'flux_lora_canny':
+            self.model = self.load_flux_lora_canny_model()
         else:
             raise ValueError(f'Unknown model name: {model_name}')
         self.current_model_name = model_name
@@ -61,6 +63,13 @@ class ModelManager:
     def load_flux_lora_model(self):
         # Load the flux_inpaint model
         from flux_lora.inference_lora import get_model_pipe
+
+        pipe = get_model_pipe()
+        return pipe
+
+    def load_flux_lora_canny_model(self):
+        # Load the flux_inpaint model
+        from flux_lora.comfy_inf_2 import get_model_pipe
 
         pipe = get_model_pipe()
         return pipe
