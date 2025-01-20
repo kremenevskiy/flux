@@ -165,7 +165,7 @@ async def flux_canny_image(
     prompt: str = Form(...),
     image: UploadFile = File(...),  # noqa: B008
     seed: int = Form(0),
-    num_steps: int = Form(50),
+    num_steps: int = Form(30),
     guidance: float = Form(4.0),
     canny_guidance: float = Form(0.7),
 ) -> FileResponse:

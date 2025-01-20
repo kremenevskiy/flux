@@ -150,9 +150,9 @@ if __name__ == '__main__':
 
     # send_lora_canny()
 
-    # send_canny()
-    # send_inpaint()
-    # send_generate()
+    send_canny()
+    send_inpaint()
+    send_generate()
     send_lora_canny()
 
     # send_generate()
