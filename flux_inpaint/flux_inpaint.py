@@ -53,7 +53,7 @@ def create_inpaint(
         control_mask=mask,
         num_inference_steps=28,
         generator=generator,
-        controlnet_conditioning_scale=0.9,
+        controlnet_conditioning_scale=0.4,
         guidance_scale=3.5,
         negative_prompt='',
         true_guidance_scale=1.0,  # default: 3.5 for alpha and 1.0 for beta
