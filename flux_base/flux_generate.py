@@ -80,4 +80,6 @@ def infer(
         good_vae=good_vae,
     ):
         img, seed = img, seed
+    
+    torch.cuda.empty_cache()
     return img

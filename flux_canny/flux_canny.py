@@ -93,8 +93,6 @@ def create_canny(
         num_steps, (width // 8) * (height // 8) // (16 * 16), shift=(not is_schnell)
     )
 
-    print('timesteps: ', timesteps)
-
     canny_processed = preprocess_canny_image(control_image, width, height, crop=False)
     canny_processed.save('canny.png')
     controlnet_cond = torch.from_numpy((np.array(canny_processed) / 127.5) - 1)
@@ -124,7 +122,9 @@ def create_canny(
     x1 = rearrange(x1[-1], 'c h w -> h w c')
     output_img = Image.fromarray((127.5 * (x1 + 1.0)).cpu().byte().numpy())
 
+
     output_img.save(save_path)
+    torch.cuda.empty_cache()
 
 
 def preprocess_image(image, target_width, target_height, crop=False):

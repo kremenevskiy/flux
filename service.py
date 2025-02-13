@@ -10,7 +10,7 @@ import utils_service
 from flux_base import flux_generate
 from flux_canny import flux_canny
 from flux_inpaint import flux_inpaint
-from flux_lora import comfy_inf, comfy_inf_2, inference_lora
+from flux_lora import comfy_inf_2, inference_lora
 
 app = FastAPI()
 
@@ -173,8 +173,6 @@ async def flux_canny_image(
         Path(config.config.dirs.canny_base_dir)
         / f'{utils_service.get_hash_from_uuid()}{Path(image.filename).suffix}'
     )
-    print('base img path: ', base_img_path.resolve())
-
     canny_img_path = (
         Path(config.config.dirs.canny_dir)
         / f'{utils_service.get_hash_from_uuid()}{Path(image.filename).suffix}'

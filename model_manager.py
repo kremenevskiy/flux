@@ -2,6 +2,8 @@
 
 
 import torch
+import gc
+
 
 
 class ModelManager:
@@ -34,10 +36,15 @@ class ModelManager:
 
     def unload_model(self) -> None:
         # Unload the current model and clear CUDA cache
+        if isinstance(self.model, tuple):
+            for sub_model in self.model:
+                del sub_model  
         del self.model
         self.model = None
         self.current_model_name = None
+        gc.collect()
         torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
     def load_flux_generate_model(self):
         # Load the flux_generate model

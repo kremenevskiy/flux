@@ -267,7 +267,18 @@ def infer(
             img_pt = img_pt.squeeze(0)
             img_pt = img_pt.permute(2, 0, 1)
             torchvision.utils.save_image(img_pt, save_path)
+            del vaedecode_7
+            del xlabssampler_3
+            del applyfluxcontrolnet_14
+            del cannyedgepreprocessor_15
+            del cliptextencodeflux_19
+            del loadimage_16
+            del emptylatentimage_6
+            del cliptextencodeflux_5
+            torch.cuda.empty_cache()
             return img_pt
+
+        
     return
 
 

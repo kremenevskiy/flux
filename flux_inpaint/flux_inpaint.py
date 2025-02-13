@@ -60,3 +60,4 @@ def create_inpaint(
     ).images[0]
 
     result.save(save_path)
+    torch.cuda.empty_cache()

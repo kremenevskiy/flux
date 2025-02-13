@@ -68,4 +68,6 @@ def infer(
         # cross_attention_kwargs={"scale": 0.9}
     ).images[0]
 
+    torch.cuda.empty_cache()
+
     return img
