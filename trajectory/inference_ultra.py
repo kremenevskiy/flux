@@ -1,8 +1,16 @@
-from demo import TrajCrafter
+import os
+import sys
 import torch
 from datetime import datetime
-import os
 import shutil
+import argparse
+
+# Add TrajectoryCrafter to Python path if not already there
+TRAJ_CRAFTER_PATH = '/root/TrajectoryCrafter'
+if TRAJ_CRAFTER_PATH not in sys.path:
+    sys.path.append(TRAJ_CRAFTER_PATH)
+
+from demo import TrajCrafter
 
 class CameraMove:
     PAN_LEFT = "0; 0; 0; -2; 0"
@@ -112,7 +120,7 @@ def run_trajectory_crafter(
     elif mode == 'bullet':
         crafter.infer_bullet(opts)
         
-    return os.path.join(output_dir, 'viz.mp4')
+    return os.path.join(output_dir, 'gen.mp4')
 
 def run_trajectory_crafter_with_save(
     video_path: str,
@@ -168,13 +176,27 @@ def run_trajectory_crafter_with_save(
     return temp_output_path
 
 if __name__ == "__main__":
+    # Add argument parsing
+    parser = argparse.ArgumentParser(description='Run TrajectoryCrafter with command line arguments')
+    parser.add_argument('--video_path', type=str, required=True, help='Path to input video')
+    parser.add_argument('--camera_move', type=str, default=CameraMove.ZOOM_IN, help='Camera movement parameters')
+    parser.add_argument('--save_path', type=str, help='Path to save the output video')
+    parser.add_argument('--stride', type=int, default=2, help='Frame sampling stride (1-3)')
+    parser.add_argument('--center_scale', type=float, default=1.0, help='Center scale factor (0.1-2.0)')
+    parser.add_argument('--sampling_steps', type=int, default=50, help='Number of diffusion steps (1-50)')
+    parser.add_argument('--random_seed', type=int, default=43, help='Random seed (0-2^31)')
+    parser.add_argument('--mode', type=str, default='gradual', help='Camera mode (gradual, direct, or bullet)')
+    
+    args = parser.parse_args()
+    
     output_path = run_trajectory_crafter_with_save(
-        video_path="/root/TrajectoryCrafter/pic_3.mp4",
-        camera_move=CameraMove.ZOOM_IN,  # or any other camera move
-        save_path="./my_output/final_video.mp4",  # Custom save location
-        stride=2,
-        center_scale=1.0,
-        sampling_steps=50,
-        random_seed=43
+        video_path=args.video_path,
+        camera_move=args.camera_move,
+        save_path=args.save_path,
+        stride=args.stride,
+        center_scale=args.center_scale,
+        sampling_steps=args.sampling_steps,
+        random_seed=args.random_seed,
+        mode=args.mode
     )
     print(f"Generated video saved to: {output_path}")

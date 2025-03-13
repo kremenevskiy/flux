@@ -11,6 +11,7 @@ class DirsConfig:
     canny_dir: str = 'data/canny-images'
     canny_processed_dir: str = 'data/canny_processed_images'
     canny_base_dir: str = 'data/canny-base'
+    animation_dir: str = 'data/animation'
 
 
 @dataclass(frozen=True)
