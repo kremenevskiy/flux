@@ -8,7 +8,7 @@ BASE_URL = 'http://127.0.0.1:11234'
 print('BASE URL: ', BASE_URL)
 
 # Test video path and output directory
-TEST_VIDEO_PATH = '/root/pic_1.mp4'  # Update this path to your test video
+TEST_VIDEO_PATH = '/root/manual.mp4'  # Update this path to your test video
 OUT_DIR = Path('test_outputs')
 
 

@@ -4,6 +4,7 @@ import torch
 from datetime import datetime
 import shutil
 import argparse
+import cv2
 
 # Add TrajectoryCrafter to Python path if not already there
 TRAJ_CRAFTER_PATH = '/root/TrajectoryCrafter'
@@ -63,14 +64,15 @@ def run_trajectory_crafter(
     opts.video_path = video_path
     opts.stride = stride
     opts.radius_scale = center_scale
-    opts.diffusion_inference_steps = sampling_steps
+    # FIXME: hard coded
+    opts.diffusion_inference_steps = 50
     opts.seed = random_seed
     opts.save_dir = output_dir
     opts.device = device
     opts.mode = mode
     opts.weight_dtype = torch.bfloat16
     opts.video_length = 49
-    opts.fps = 10
+    opts.fps = 20
     opts.mask = False
     opts.camera = 'target'
     opts.target_pose = [float(x) for x in camera_move.split(';')]
@@ -87,7 +89,14 @@ def run_trajectory_crafter(
     opts.blip_path = "Salesforce/blip2-opt-2.7b"
     
     # Additional parameters from gradio_app.py
-    opts.sample_size = [384, 672]
+    # Get input video dimensions
+    # FIXME: hard coded
+    cap = cv2.VideoCapture(video_path)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap.release()
+    # FIXME: hard coded
+    opts.sample_size = [528, 720]
     opts.diffusion_guidance_scale = 6.0
     opts.sampler_name = "DDIM_Origin"
     opts.low_gpu_memory_mode = False
