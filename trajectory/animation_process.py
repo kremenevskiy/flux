@@ -58,8 +58,8 @@ def process_zoom_in_animation(
 
 if __name__ == "__main__":
     # Example usage
-    input_path = Path("/root/TrajectoryCrafter/test/videos/p7.mp4")
-    output_path = Path("zoomed_test_video.mp4")
+    input_path = Path("/root/flux/data/animation/dfe44/base_video.mp4")
+    output_path = Path("zoomed_test_video_2.mp4")
     
     result_path = process_zoom_in_animation(input_path, output_path)
     print(f"Video processed successfully: {result_path}")

@@ -13,6 +13,7 @@ if TRAJ_CRAFTER_PATH not in sys.path:
 
 from demo import TrajCrafter
 
+
 class CameraMove:
     PAN_LEFT = "0; 0; 0; -2; 0"
     PAN_RIGHT = "0; 0; 0; 2; 0"
@@ -129,7 +130,7 @@ def run_trajectory_crafter(
     elif mode == 'bullet':
         crafter.infer_bullet(opts)
         
-    return os.path.join(output_dir, 'gen.mp4')
+    return os.path.join(output_dir, 'gen_reversed.mp4')
 
 def run_trajectory_crafter_with_save(
     video_path: str,

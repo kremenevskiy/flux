@@ -10,3 +10,4 @@ venv-flux
 venv
 experiments
 *safetensors
+*.mp4
