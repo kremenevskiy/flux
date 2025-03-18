@@ -65,8 +65,7 @@ def run_trajectory_crafter(
     opts.video_path = video_path
     opts.stride = stride
     opts.radius_scale = center_scale
-    # FIXME: hard coded
-    opts.diffusion_inference_steps = 50
+    opts.diffusion_inference_steps = sampling_steps
     opts.seed = random_seed
     opts.save_dir = output_dir
     opts.device = device
