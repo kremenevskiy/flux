@@ -6,11 +6,25 @@ from lora_train import gpt_api
 
 
 class DatasetProcessor:
+    def __init__(self, trigger_word: str | None = None, put_only_trigger_word: bool = False):
+        self.trigger_word = trigger_word
+        self.put_only_trigger_word = put_only_trigger_word
+        assert self.put_only_trigger_word or self.trigger_word is not None, (
+            'trigger_word must be provided if put_only_trigger_word is True'
+        )
+
     def process_dataset(self) -> None:
         self.generate_descriptions_for_local_photos()
 
     def generate_photo_description(self, photo_path: str) -> str:
-        return gpt_api.GptApi().get_image_description_untill_success(image_path=photo_path)
+        if self.put_only_trigger_word:
+            return self.trigger_word
+        image_description = gpt_api.GptApi().get_image_description_untill_success(
+            image_path=photo_path
+        )
+        if self.trigger_word:
+            image_description = f'{self.trigger_word}, {image_description}'
+        return image_description
 
     def generate_descriptions_for_local_photos(self, photos_dir: str, output_dir: str) -> None:
         photos_dir_pth = Path(photos_dir)
@@ -51,7 +65,7 @@ class DatasetProcessor:
 
 
 if __name__ == '__main__':
-    ds_processor = DatasetProcessor()
-    ds_path = '/root/imgs_ds/pic_e'
-    output_path = '/root/data/processed_e/'
+    ds_processor = DatasetProcessor(trigger_word='pic_a', put_only_trigger_word=True)
+    ds_path = '/root/imgs_ds/pic_a'
+    output_path = '/root/data/processed_a_only_trigger_word/'
     ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)

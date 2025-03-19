@@ -1,0 +1,78 @@
+config:
+  name: trained_model_a_fast
+  process:
+  - datasets:
+    - cache_latents_to_disk: true
+      caption_dropout_rate: 0.05
+      caption_ext: txt
+      folder_path: data/processed_a_only_trigger_word 
+      resolution:
+      - 512
+      - 768
+      - 1024
+      shuffle_tokens: false
+    device: cuda:0
+    model:
+      is_flux: true
+      name_or_path: black-forest-labs/FLUX.1-dev
+      quantize: true
+    network:
+      linear: 16
+      linear_alpha: 16
+      type: lora
+      network_kwargs:
+          only_if_contains:
+            - "transformer.single_transformer_blocks.7."
+            - "transformer.single_transformer_blocks.9."
+            - "transformer.single_transformer_blocks.12."
+            - "transformer.single_transformer_blocks.16."
+            - "transformer.single_transformer_blocks.20."
+            - "transformer.single_transformer_blocks.25."
+    sample:
+      guidance_scale: 4
+      height: 1024
+      neg: ''
+      prompts:
+      - "[trigger], The image depicts a glossy icon featuring a golden horseshoe. The horseshoe is slightly curved with a polished metallic surface, adorned with small rivets along its edges. The background has a radiant glow, emphasizing its lucky symbolism. The frame around the icon is rounded and ornate, enhancing the premium feel of the image."
+      - "[trigger], The image showcases a vibrant slot game icon featuring a juicy watermelon slice. The fruit is depicted in a semi-realistic style, with rich red flesh, dark seeds, and a glossy green rind. Droplets of moisture glisten on the surface, making it appear fresh and appetizing. The square frame has rounded edges and a subtle glow, giving the icon a premium feel."
+      - "[trigger], The image features a dynamic slot icon depicting a treasure chest overflowing with gold coins. The chest is ornately decorated with metal reinforcements and a large lock. The lid is slightly open, revealing the shimmering gold inside. The background includes a faint glow, emphasizing the richness and excitement of the treasure."
+      - "[trigger], The image depicts a mystical slot game icon featuring a glowing crystal ball. The ball is held by an elegant metallic stand with ornate carvings. Inside the transparent sphere, swirling magical energy is visible. The background has a gradient of deep blues and purples, adding a sense of mystery and enchantment to the composition."
+      - "[trigger], The image showcases a glossy icon featuring a red lucky seven symbol. The number '7' is designed in a bold, curvy style with a reflective, metallic sheen. Small sparkles and highlights give it a polished and premium look. The background is a gradient of fiery reds and oranges, reinforcing the theme of luck and excitement."
+      - "[trigger], The image depicts a majestic phoenix slot icon. The mythical bird is shown mid-flight with its wings spread wide, composed of vibrant flames. The feathers transition from deep reds to bright golds, giving the appearance of burning embers. The background is dark with fiery accents, making the phoenix stand out as a powerful and legendary figure."
+      - "[trigger], The image features a slot game icon of a wizard's spell book. The book has an aged leather cover with glowing magical runes embossed on the front. A golden clasp secures the book, and faint magical energy swirls around it. The background has deep purples and blues, enhancing the mystical aura of the artifact."
+      - "[trigger], The image depicts an ancient Egyptian slot icon featuring a golden scarab beetle. The beetle is encrusted with small gemstone details and has an intricate design, symbolizing luck and protection. The background consists of sand-hued textures and faint hieroglyphics, enhancing the historical and mystical theme of the icon."
+      - "[trigger], The image showcases a sleek and futuristic slot game icon featuring a neon-lit cyber coin. The coin appears to be floating, with intricate circuit patterns glowing in blue and purple. The metallic surface reflects ambient neon lights, giving it a high-tech aesthetic. The background features a digital grid, reinforcing the cyberpunk theme."
+      sample_every: 1000
+      sample_steps: 20
+      sampler: flowmatch
+      seed: 42
+      walk_seed: true
+      width: 1024
+    save:
+      dtype: float16
+      max_step_saves_to_keep: 30
+      push_to_hub: false
+      save_every: 1000
+    train:
+      batch_size: 1
+      disable_sampling: false
+      dtype: bf16
+      ema_config:
+        ema_decay: 0.99
+        use_ema: true
+      gradient_accumulation_steps: 1
+      gradient_checkpointing: true
+      lr: 1e-4
+      noise_scheduler: flowmatch
+      optimizer: adamw8bit
+      skip_first_sample: true
+      steps: 8000
+      train_text_encoder: false
+      train_unet: true
+    training_folder: output
+    trigger_word: pic_a
+    type: sd_trainer
+job: extension
+meta:
+  name: '[name]'
+  version: '1.0'
