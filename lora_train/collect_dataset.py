@@ -29,10 +29,14 @@ class DatasetProcessor:
                 logger.info(f'Processing: {photo_path.name}')
 
                 # Generate description
+                text_save_path = output_dir_pth / f'{idx}.txt'
+                if text_save_path.exists():
+                    logger.info(f'Description already exists: {text_save_path}')
+                    continue
                 image_description = self.generate_photo_description(photo_path=str(photo_path))
 
                 # Save description in a text file
-                text_save_path = output_dir_pth / f'{idx}.txt'
+
                 with text_save_path.open('w', encoding='utf-8') as text_file:
                     text_file.write(image_description)
 
@@ -48,6 +52,6 @@ class DatasetProcessor:
 
 if __name__ == '__main__':
     ds_processor = DatasetProcessor()
-    ds_path = '/root/imgs_ds/pic_a'
-    output_path = '/root/data/processed/'
+    ds_path = '/root/imgs_ds/pic_e'
+    output_path = '/root/data/processed_e/'
     ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)

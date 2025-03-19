@@ -1,0 +1,88 @@
+config:
+  name: trained_model_d
+  process:
+  - datasets:
+    - cache_latents_to_disk: true
+      caption_dropout_rate: 0.05
+      caption_ext: txt
+      folder_path: data/processed_d
+      resolution:
+      - 512
+      - 768
+      - 1024
+      shuffle_tokens: false
+    device: cuda:0
+    model:
+      is_flux: true
+      name_or_path: black-forest-labs/FLUX.1-dev
+      quantize: true
+    network:
+      linear: 16
+      linear_alpha: 16
+      type: lora
+    sample:
+      guidance_scale: 4
+      height: 1024
+      neg: ''
+      prompts:
+      - '[trigger], A woman in a cozy red sweater stands by a beautifully decorated
+        Christmas tree, holding a steaming mug of hot cocoa. The warm glow of fairy
+        lights and the scent of pine fill the air, creating a festive and magical
+        atmosphere.'
+      - "[trigger], A woman in a sleek black dress leans casually against a shiny\
+        \ red Porsche, her sunglasses reflecting the city skyline. The car\u2019s\
+        \ polished surface gleams under the sunlight, exuding elegance and sophistication."
+      - '[trigger], A woman stands barefoot on a sandy beach, the waves gently lapping
+        at her feet. She wears a flowing white dress that flutters in the ocean breeze,
+        her gaze fixed on the horizon as the sun sets in a blaze of orange and pink.'
+      - '[trigger], A girl smiles brightly as she takes a selfie in front of a vibrant
+        street mural. Her phone captures the colorful artwork behind her, while passersby
+        blur in the background, adding a lively energy to the scene.'
+      - '[trigger], A woman sits at a candlelit table in an upscale restaurant, her
+        elegant dress catching the soft light. She sips a glass of wine, her eyes
+        scanning the menu as the ambient chatter and clinking of glasses create a
+        warm, inviting atmosphere.'
+      - '[trigger], A confident woman stands on a stage, holding a microphone as she
+        addresses a large audience. Her poised demeanor and expressive gestures command
+        attention, while the spotlight highlights her against the backdrop of a packed
+        auditorium.'
+      - "[trigger], A woman stands in a room filled with an array of large, extravagant\
+        \ bouquets\u2014each one unique, from towering sunflowers to cascading orchids\
+        \ and vibrant peonies. The bouquets are artfully arranged in vases of different\
+        \ shapes and sizes, their colors and fragrances blending into a breathtaking\
+        \ display. She gently holds a single rose, her expression serene as she admires\
+        \ the floral masterpiece around her."
+      sample_every: 1000
+      sample_steps: 20
+      sampler: flowmatch
+      seed: 42
+      walk_seed: true
+      width: 1024
+    save:
+      dtype: float16
+      max_step_saves_to_keep: 30
+      push_to_hub: false
+      save_every: 1000
+    train:
+      batch_size: 1
+      disable_sampling: true
+      dtype: bf16
+      ema_config:
+        ema_decay: 0.99
+        use_ema: true
+      gradient_accumulation_steps: 1
+      gradient_checkpointing: true
+      lr: 1e-4
+      noise_scheduler: flowmatch
+      optimizer: adamw8bit
+      skip_first_sample: true
+      steps: 8000
+      train_text_encoder: false
+      train_unet: true
+    training_folder: output
+    trigger_word: pic_d
+    type: sd_trainer
+job: extension
+meta:
+  name: '[name]'
+  version: '1.0'
