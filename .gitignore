@@ -11,3 +11,4 @@ venv
 experiments
 *safetensors
 *.mp4
+/lora_train/compare_loras
