@@ -25,6 +25,22 @@ class CameraMove:
     ORBIT_DOWN = "-20; 0; 0; 0; 0"
     ZOOM_IN = "0; 0; 0.5; 0; 0"
     ZOOM_OUT = "0; 0; -0.5; 0; 0"
+    
+    @classmethod
+    def get_all_moves(cls):
+        """Return all camera move types as dict."""
+        return {
+            "PAN_LEFT": cls.PAN_LEFT,
+            "PAN_RIGHT": cls.PAN_RIGHT,
+            "PAN_UP": cls.PAN_UP,
+            "PAN_DOWN": cls.PAN_DOWN,
+            "ORBIT_LEFT": cls.ORBIT_LEFT,
+            "ORBIT_RIGHT": cls.ORBIT_RIGHT,
+            "ORBIT_UP": cls.ORBIT_UP,
+            "ORBIT_DOWN": cls.ORBIT_DOWN,
+            "ZOOM_IN": cls.ZOOM_IN,
+            "ZOOM_OUT": cls.ZOOM_OUT
+        }
 
 def run_trajectory_crafter(
     video_path: str,
@@ -65,7 +81,8 @@ def run_trajectory_crafter(
     opts.video_path = video_path
     opts.stride = stride
     opts.radius_scale = center_scale
-    opts.diffusion_inference_steps = sampling_steps
+    # FIXME: hard coded
+    opts.diffusion_inference_steps = 5
     opts.seed = random_seed
     opts.save_dir = output_dir
     opts.device = device
@@ -141,7 +158,8 @@ def run_trajectory_crafter_with_save(
     random_seed: int = 43,  # 0-2^31
     output_dir: str = None,
     device: str = "cuda:0",
-    mode: str = "gradual"  # gradual, direct, or bullet
+    mode: str = "gradual",  # gradual, direct, or bullet
+    camera_move_name: str = 'ZOOM_IN'  # Optional name of camera move for filename
 ) -> str:
     """
     Run TrajectoryCrafter and save the output to a custom location.
@@ -157,6 +175,7 @@ def run_trajectory_crafter_with_save(
         output_dir: Output directory (default: ./experiments/timestamp)
         device: Device to run on (default: cuda:0)
         mode: Camera mode (gradual, direct, or bullet)
+        camera_move_name: Name of camera move (e.g., "ZOOM_IN") for filename
         
     Returns:
         Path to the final saved video file
@@ -184,28 +203,347 @@ def run_trajectory_crafter_with_save(
     
     return temp_output_path
 
+def run_multiple_tests(
+    video_path: str,
+    output_base_dir: str = None,
+    stride: int = 1,
+    center_scale: float = 1.0,
+    sampling_steps: int = 50,
+    random_seed: int = 43,
+    device: str = "cuda:0",
+    mode: str = "gradual",
+    camera_moves: list = None
+) -> dict:
+    """
+    Run TrajectoryCrafter with multiple camera move types and save the results.
+    
+    Args:
+        video_path: Path to input video
+        output_base_dir: Base directory for outputs (default: ./experiments/multipletests_timestamp)
+        stride: Frame sampling stride (1-3)
+        center_scale: Center scale factor (0.1-2.0)
+        sampling_steps: Number of diffusion steps (1-50)
+        random_seed: Random seed (0-2^31)
+        device: Device to run on (default: cuda:0)
+        mode: Camera mode (gradual, direct, or bullet)
+        camera_moves: List of camera move names to test (default: all)
+        
+    Returns:
+        Dictionary of move_name -> output_path
+    """
+    # Setup output directory
+    if output_base_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        output_base_dir = f'./experiments/multipletests_{timestamp}'
+    os.makedirs(output_base_dir, exist_ok=True)
+    
+    # Get video filename without extension
+    video_filename = os.path.splitext(os.path.basename(video_path))[0]
+    
+    # Get camera moves to test
+    all_moves = CameraMove.get_all_moves()
+    if camera_moves is None:
+        camera_moves = list(all_moves.keys())
+    
+    results = {}
+    
+    # Run tests for each camera move
+    for move_name in camera_moves:
+        move_value = all_moves.get(move_name)
+        if not move_value:
+            print(f"Warning: unknown camera move '{move_name}', skipping.")
+            continue
+        
+        print(f"Testing camera move: {move_name} ({move_value})")
+        
+        # Define output filename with camera move name
+        output_filename = f"{video_filename}_{move_name}.mp4"
+        save_path = os.path.join(output_base_dir, output_filename)
+        
+        # Run the test using run_trajectory_crafter_with_save
+        output_path = run_trajectory_crafter_with_save(
+            video_path=video_path,
+            camera_move=move_value,
+            save_path=save_path,  # Save directly with the camera move in the filename
+            stride=stride,
+            center_scale=center_scale,
+            sampling_steps=sampling_steps,
+            random_seed=random_seed,
+            output_dir=os.path.join(output_base_dir, move_name),  # Still use separate work directories
+            device=device,
+            mode=mode,
+            camera_move_name=move_name
+        )
+        
+        # Store the result
+        results[move_name] = output_path
+        print(f"Generated {move_name} video: {output_path}")
+    
+    # Create a summary text file
+    summary_path = os.path.join(output_base_dir, "summary.txt")
+    with open(summary_path, "w") as f:
+        f.write(f"Multi-test results for {video_path}\n")
+        f.write(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Parameters: stride={stride}, center_scale={center_scale}, sampling_steps={sampling_steps}, mode={mode}\n\n")
+        for move_name, path in results.items():
+            f.write(f"{move_name}: {path}\n")
+    
+    print(f"All tests completed. Summary saved to {summary_path}")
+    return results
+
+def find_video_files(folder_path: str) -> list:
+    """
+    Find all video files in the specified folder.
+    
+    Args:
+        folder_path: Path to folder to search for videos
+        
+    Returns:
+        List of full paths to video files
+    """
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+    video_files = []
+    
+    for filename in os.listdir(folder_path):
+        if any(filename.lower().endswith(ext) for ext in video_extensions):
+            video_files.append(os.path.join(folder_path, filename))
+    
+    return video_files
+
+def process_single_video(
+    video_path: str,
+    output_folder: str,
+    stride: int,
+    center_scale: float,
+    sampling_steps: int,
+    random_seed: int,
+    device: str,
+    mode: str
+) -> dict:
+    """
+    Process a single video with ZOOM_IN and ZOOM_OUT effects.
+    
+    Args:
+        video_path: Path to the video file
+        output_folder: Path to folder where to save outputs
+        stride: Frame sampling stride
+        center_scale: Center scale factor
+        sampling_steps: Number of diffusion steps
+        random_seed: Random seed
+        device: Device to run on
+        mode: Camera mode
+        
+    Returns:
+        Dictionary with camera moves as keys and output paths as values
+    """
+    video_basename = os.path.basename(video_path)
+    video_name = os.path.splitext(video_basename)[0]
+    results = {}
+    
+    # Process ZOOM_IN
+    zoom_in_output = os.path.join(output_folder, f"{video_name}_ZOOM_IN.mp4")
+    if os.path.exists(zoom_in_output):
+        print(f"Already processed {video_basename} with ZOOM_IN effect, skipping.")
+        return results
+    zoom_in_path = run_trajectory_crafter_with_save(
+        video_path=video_path,
+        camera_move=CameraMove.ZOOM_IN,
+        save_path=zoom_in_output,
+        stride=stride,
+        center_scale=center_scale,
+        sampling_steps=sampling_steps,
+        random_seed=random_seed,
+        device=device,
+        mode=mode,
+        camera_move_name="ZOOM_IN"
+    )
+    results["ZOOM_IN"] = zoom_in_path
+    
+    # # Process ZOOM_OUT
+    # zoom_out_output = os.path.join(output_folder, f"{video_name}_ZOOM_OUT.mp4")
+    # print(f"Processing {video_basename} with ZOOM_OUT effect...")
+    # zoom_out_path = run_trajectory_crafter_with_save(
+    #     video_path=video_path,
+    #     camera_move=CameraMove.ZOOM_OUT,
+    #     save_path=zoom_out_output,
+    #     stride=stride,
+    #     center_scale=center_scale,
+    #     sampling_steps=sampling_steps,
+    #     random_seed=random_seed,
+    #     device=device,
+    #     mode=mode,
+    #     camera_move_name="ZOOM_OUT"
+    # )
+    # results["ZOOM_OUT"] = zoom_out_path
+    
+    # print(f"Completed processing {video_basename}")
+    return results
+
+def create_processing_summary(output_folder: str, results: dict, parameters: dict) -> str:
+    """
+    Create a summary file for the processing results.
+    
+    Args:
+        output_folder: Path to the output folder
+        results: Dictionary with processing results
+        parameters: Dictionary with processing parameters
+        
+    Returns:
+        Path to the created summary file
+    """
+    summary_path = os.path.join(output_folder, "processing_summary.txt")
+    
+    with open(summary_path, "w") as f:
+        f.write(f"Video Processing Summary\n")
+        f.write(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Parameters: stride={parameters['stride']}, center_scale={parameters['center_scale']}, " +
+                f"sampling_steps={parameters['sampling_steps']}, mode={parameters['mode']}\n\n")
+        
+        for video_path, outputs in results.items():
+            f.write(f"Video: {video_path}\n")
+            for effect, output_path in outputs.items():
+                f.write(f"  {effect}: {output_path}\n")
+            f.write("\n")
+    
+    return summary_path
+
+def process_video_folder(
+    input_folder: str,
+    output_folder: str,
+    stride: int = 2,
+    center_scale: float = 1.0,
+    sampling_steps: int = 50,
+    random_seed: int = 43,
+    device: str = "cuda:0",
+    mode: str = "gradual"
+) -> dict:
+    """
+    Process all videos in a folder applying ZOOM_IN and ZOOM_OUT effects.
+    
+    Args:
+        input_folder: Path to folder containing input videos
+        output_folder: Path to folder where output videos will be saved
+        stride: Frame sampling stride (1-3)
+        center_scale: Center scale factor (0.1-2.0)
+        sampling_steps: Number of diffusion steps (1-50)
+        random_seed: Random seed (0-2^31)
+        device: Device to run on (default: cuda:0)
+        mode: Camera mode (gradual, direct, or bullet)
+        
+    Returns:
+        Dictionary with input video paths as keys and a dict of outputs as values
+    """
+    # Create output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Find all video files in the input folder
+    video_files = find_video_files(input_folder)
+    
+    if not video_files:
+        print(f"No video files found in {input_folder}")
+        return {}
+    
+    # Process each video
+    results = {}
+    for video_path in video_files:
+        video_results = process_single_video(
+            video_path=video_path,
+            output_folder=output_folder,
+            stride=stride,
+            center_scale=center_scale,
+            sampling_steps=sampling_steps,
+            random_seed=random_seed,
+            device=device,
+            mode=mode
+        )
+        results[video_path] = video_results
+    
+    # Create a summary file
+    parameters = {
+        'stride': stride,
+        'center_scale': center_scale,
+        'sampling_steps': sampling_steps,
+        'mode': mode
+    }
+    summary_path = create_processing_summary(output_folder, results, parameters)
+    
+    print(f"All videos processed. Summary saved to {summary_path}")
+    return results
+
 if __name__ == "__main__":
     # Add argument parsing
     parser = argparse.ArgumentParser(description='Run TrajectoryCrafter with command line arguments')
-    parser.add_argument('--video_path', type=str, required=True, help='Path to input video')
+    parser.add_argument('--video_path', type=str, help='Path to input video')
+    parser.add_argument('--input_folder', type=str, help='Path to folder containing input videos')
+    parser.add_argument('--output_folder', type=str, help='Path to folder where output videos will be saved')
     parser.add_argument('--camera_move', type=str, default=CameraMove.ZOOM_IN, help='Camera movement parameters')
+    parser.add_argument('--camera_move_name', type=str, help='Name for the camera move (e.g., ZOOM_IN)')
     parser.add_argument('--save_path', type=str, help='Path to save the output video')
     parser.add_argument('--stride', type=int, default=2, help='Frame sampling stride (1-3)')
     parser.add_argument('--center_scale', type=float, default=1.0, help='Center scale factor (0.1-2.0)')
     parser.add_argument('--sampling_steps', type=int, default=50, help='Number of diffusion steps (1-50)')
     parser.add_argument('--random_seed', type=int, default=43, help='Random seed (0-2^31)')
     parser.add_argument('--mode', type=str, default='gradual', help='Camera mode (gradual, direct, or bullet)')
+    parser.add_argument('--multi_test', action='store_true', help='Run multiple tests with all camera move types')
+    parser.add_argument('--output_dir', type=str, help='Output directory for results')
+    parser.add_argument('--camera_moves', type=str, nargs='+', help='Specific camera moves to test (e.g. ZOOM_IN ZOOM_OUT)')
+    parser.add_argument('--process_folder', action='store_true', help='Process all videos in input_folder with ZOOM_IN and ZOOM_OUT effects')
     
     args = parser.parse_args()
     
-    output_path = run_trajectory_crafter_with_save(
-        video_path=args.video_path,
-        camera_move=args.camera_move,
-        save_path=args.save_path,
-        stride=args.stride,
-        center_scale=args.center_scale,
-        sampling_steps=args.sampling_steps,
-        random_seed=args.random_seed,
-        mode=args.mode
-    )
-    print(f"Generated video saved to: {output_path}")
+    if args.process_folder:
+        if not args.input_folder or not args.output_folder:
+            print("Error: --input_folder and --output_folder are required when using --process_folder")
+            parser.print_help()
+            sys.exit(1)
+            
+        results = process_video_folder(
+            input_folder=args.input_folder,
+            output_folder=args.output_folder,
+            stride=args.stride,
+            center_scale=args.center_scale,
+            sampling_steps=args.sampling_steps,
+            random_seed=args.random_seed,
+            device="cuda:0",
+            mode=args.mode
+        )
+        print(f"Completed folder processing. Check results in {args.output_folder}")
+    elif args.multi_test:
+        # Run multiple tests with all or specified camera moves
+        if not args.video_path:
+            print("Error: --video_path is required when using --multi_test")
+            parser.print_help()
+            sys.exit(1)
+            
+        camera_moves = args.camera_moves if args.camera_moves else None
+        results = run_multiple_tests(
+            video_path=args.video_path,
+            output_base_dir=args.output_dir,
+            stride=args.stride,
+            center_scale=args.center_scale,
+            sampling_steps=args.sampling_steps,
+            random_seed=args.random_seed,
+            mode=args.mode,
+            camera_moves=camera_moves
+        )
+        print(f"Completed multi-test. Check results in the output directory.")
+    else:
+        # Run single test
+        if not args.video_path:
+            print("Error: --video_path is required for single test")
+            parser.print_help()
+            sys.exit(1)
+            
+        output_path = run_trajectory_crafter_with_save(
+            video_path=args.video_path,
+            camera_move=args.camera_move,
+            save_path=args.save_path,
+            stride=args.stride,
+            center_scale=args.center_scale,
+            sampling_steps=args.sampling_steps,
+            random_seed=args.random_seed,
+            output_dir=args.output_dir,
+            mode=args.mode,
+            camera_move_name=args.camera_move_name
+        )
+        print(f"Generated video saved to: {output_path}")
