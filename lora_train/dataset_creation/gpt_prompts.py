@@ -11,7 +11,7 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "fill": "100%",
             "color_tone": "warm tones (gold, orange, red)",
             "layers": "Foreground (main icon), midground (decorative elements), background (distant scene)",
-            "size": "The icon should be very large and dominant, filling almost the entire frame."
+            "size": "The icon should be very large and dominant, filling almost the entire frame. At least 20–30% of the object should include golden materials or ornaments to emphasize its richness."
         },
         "high-tier": {
             "style": "Polished and refined, but slightly simpler than top-tier.",
@@ -36,26 +36,26 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "size": "The icon should be medium-sized and balanced within the frame."
         },
         "low-mid-tier": {
-            "style": "Simpler cartoon-like style.",
+            "style": "Cartoon-like game art with smoother finish.",
             "colors": "Cool tones like turquoise and silver-green.",
-            "effects": "No strong glow, smooth finish.",
-            "background": "Minimal background with soft color.",
-            "value": "Common but nicely designed.",
+            "effects": "Soft surfaces, subtle reflections.",
+            "background": "Soft color backgrounds with minimal design.",
+            "value": "Fitting for mid-rarity visual tier.",
             "fill": "60%",
             "color_tone": "cool tones (teal, silver)",
-            "layers": "Foreground (icon), background (flat or minimal design)",
+            "layers": "Foreground (icon), background (clean backdrop or gradient)",
             "size": "The icon should be small to medium-sized with space around it."
         },
         "low-tier": {
-            "style": "Flat, clean, minimal design.",
+            "style": "Stylized and clean design for icon-based gameplay.",
             "colors": "Cool, muted tones like silver or blue.",
-            "effects": "No glow, matte finish.",
-            "background": "Plain or abstract background.",
-            "value": "Very basic icon.",
+            "effects": "No glow, with smooth matte texture.",
+            "background": "Soft or cold abstract background that doesn’t distract.",
+            "value": "Less ornate but visually polished.",
             "fill": "50%",
             "color_tone": "cool tones (blue, silver)",
-            "layers": "Foreground (icon), background (plain color or pattern)",
-            "size": "The icon should be small and centered, with plenty of empty space."
+            "layers": "Foreground (main icon), background (subtle, clean, cool-toned)",
+            "size": "The icon should be small and less visually dominant, but clearly defined and readable."
         }
     }
 
@@ -73,14 +73,14 @@ Key Instructions:
 - The icon is the central figure of the image.
 - Break the scene into 2–3 **visual layers**: foreground (icon), midground (decorative elements), background (distant or simple setting). Use fewer layers for lower-tier icons.
 - Ensure the **main icon contrasts** with the background — it must not blend in. Background tones should differ.
-- Use a **{selected['size']}**
-- The style should be **{selected['style']}**
-- Use **{selected['colors']}**
-- Effects: **{selected['effects']}**
-- Background: **{selected['background']}**
-- Visual Value: **{selected['value']}**
-- Filling: **{selected['fill']} of the image**
-- Overall Tones: **{selected['color_tone']}**
+- {selected['size']}
+- Style: {selected['style']}
+- Colors: {selected['colors']}
+- Effects: {selected['effects']}
+- Background: {selected['background']}
+- Visual Value: {selected['value']}
+- Filling: {selected['fill']} of the image
+- Overall Tones: {selected['color_tone']}
 
 Layering: {selected['layers']}
 
@@ -93,9 +93,12 @@ Examples:
 - A shining gramophone on a wooden table, with candlelight flickering in the middle and an old city through the window behind it.
 
 And main:
-Image should have an active visual interaction with the viewer.
+The image should have an active visual interaction with the viewer.
 
 Now generate a new image prompt:
+Theme: {style_theme}  
+Icon Name: {icon_name}  
+Stylistic Tier: {tier.capitalize()}
 """
 
     return system_prompt.strip()
