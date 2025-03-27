@@ -1,7 +1,6 @@
 def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     tier = tier.lower()
 
-    # Tier-based settings
     tier_settings = {
         "top-tier": {
             "style": "Very detailed and ornate, with glowing effects and rich textures.",
@@ -10,7 +9,9 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "background": "Stylized fantasy background with ornate details.",
             "value": "Feels legendary and highly valuable.",
             "fill": "100%",
-            "color_tone": "warm tones (gold, orange, red)"
+            "color_tone": "warm tones (gold, orange, red)",
+            "layers": "Foreground (main icon), midground (decorative elements), background (distant scene)",
+            "size": "The icon should be very large and dominant, filling almost the entire frame."
         },
         "high-tier": {
             "style": "Polished and refined, but slightly simpler than top-tier.",
@@ -19,7 +20,9 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "background": "Fantasy-style with light ornamentation.",
             "value": "Looks premium and rare.",
             "fill": "85%",
-            "color_tone": "warm tones (gold, orange, red)"
+            "color_tone": "warm tones (gold, orange, red)",
+            "layers": "Foreground (main icon), midground (supporting details), background (light stylization)",
+            "size": "The icon should be large and clearly central."
         },
         "mid-tier": {
             "style": "Game-style detail with balanced elegance.",
@@ -28,7 +31,9 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "background": "Simple gradients or abstract elements.",
             "value": "Moderately rare and interesting.",
             "fill": "70%",
-            "color_tone": "balanced tones (gold, green)"
+            "color_tone": "balanced tones (gold, green)",
+            "layers": "Foreground (main icon), background (simple pattern or color gradient)",
+            "size": "The icon should be medium-sized and balanced within the frame."
         },
         "low-mid-tier": {
             "style": "Simpler cartoon-like style.",
@@ -37,7 +42,9 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "background": "Minimal background with soft color.",
             "value": "Common but nicely designed.",
             "fill": "60%",
-            "color_tone": "cool tones (teal, silver)"
+            "color_tone": "cool tones (teal, silver)",
+            "layers": "Foreground (icon), background (flat or minimal design)",
+            "size": "The icon should be small to medium-sized with space around it."
         },
         "low-tier": {
             "style": "Flat, clean, minimal design.",
@@ -46,7 +53,9 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
             "background": "Plain or abstract background.",
             "value": "Very basic icon.",
             "fill": "50%",
-            "color_tone": "cool tones (blue, silver)"
+            "color_tone": "cool tones (blue, silver)",
+            "layers": "Foreground (icon), background (plain color or pattern)",
+            "size": "The icon should be small and centered, with plenty of empty space."
         }
     }
 
@@ -57,36 +66,38 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     system_prompt = f"""
 You are an icon prompt generator for a fantasy-style slot game.
 
-Your task:
-Create a short, stylized, game-ready image description (1 sentence) for an icon.
-The icon is the central figure in the scene — like a symbol in a slot machine.
+Task:
+Generate a **one-sentence** prompt describing a stylized icon as it appears in a slot game. The image must be clearly layered and composed for visual clarity and appeal.
 
-Use the following:
-- Theme: {style_theme}
-- Icon Name: {icon_name}
-- Stylistic Tier: {tier.capitalize()}
+Key Instructions:
+- The icon is the central figure of the image.
+- Break the scene into 2–3 **visual layers**: foreground (icon), midground (decorative elements), background (distant or simple setting). Use fewer layers for lower-tier icons.
+- Ensure the **main icon contrasts** with the background — it must not blend in. Background tones should differ.
+- Use a **{selected['size']}**
+- The style should be **{selected['style']}**
+- Use **{selected['colors']}**
+- Effects: **{selected['effects']}**
+- Background: **{selected['background']}**
+- Visual Value: **{selected['value']}**
+- Filling: **{selected['fill']} of the image**
+- Overall Tones: **{selected['color_tone']}**
 
-Visual style (based on tier):
-- Style: {selected['style']}
-- Colors: {selected['colors']}
-- Effects: {selected['effects']}
-- Background: {selected['background']}
-- Value: {selected['value']}
-- Object Focus: fills {selected['fill']} of the image
-- Tones: {selected['color_tone']}
+Layering: {selected['layers']}
 
 Format:
-Output a single sentence description that brings the icon to life.
-Keep it punchy, vivid, and suitable for game art — no photorealism.
+Output a **single, punchy sentence** describing the icon in its slot-style fantasy scene.
 
 Examples:
-- A golden compass surrounded by a mystical glow, lying on an old map with islands and seas marked, and ships and outlines of unexplored lands can be seen in the background.
-- A luxurious golden train in retro style, racing along rails sparkling in the sunset light, against a backdrop of picturesque mountain landscapes and bridges stretching into the distance.
-- A golden gramophone with a shining bell stands on a wooden table in a cozy vintage room, the walls of which are decorated with paintings and antique clocks, and outside the window there is a view of the night city.
+- A golden compass glowing above a mystical map, with shimmering islands in the midground and ancient scrolls fading in the background.
+- A retro train gleaming in the foreground, rails curving through spark-lit cliffs, and a golden sunset stretching across the distant skyline.
+- A shining gramophone on a wooden table, with candlelight flickering in the middle and an old city through the window behind it.
 
+And main:
+Image should have an active visual interaction with the viewer.
 
-Now create a new prompt:
+Now generate a new image prompt:
 """
+
     return system_prompt.strip()
 
 
