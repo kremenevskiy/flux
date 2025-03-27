@@ -4,47 +4,47 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     # Tier-based settings
     tier_settings = {
         "top-tier": {
-            "style": "Extremely detailed, luxurious, with intricate patterns and fine textures.",
-            "colors": "Dominantly golden with radiant highlights, complemented by rich red and orange accents.",
-            "effects": "Dynamic lighting with radiant glows, sparkles, and polished reflections.",
-            "background": "Highly ornate with premium embellishments, such as filigree or embedded gems.",
-            "value": "Exudes grandeur and exclusivity, with an unmistakably expensive feel.",
+            "style": "Very detailed and ornate, with glowing effects and rich textures.",
+            "colors": "Warm golden tones with radiant red and orange accents.",
+            "effects": "Sparkles, glow, and shiny highlights.",
+            "background": "Stylized fantasy background with ornate details.",
+            "value": "Feels legendary and highly valuable.",
             "fill": "100%",
-            "color_tone": "warm tones (orange, golden, red)"
+            "color_tone": "warm tones (gold, orange, red)"
         },
         "high-tier": {
-            "style": "Very refined but slightly less intricate.",
-            "colors": "Warm golden tone with subtle red or orange highlights.",
-            "effects": "Gentle glows and softer lighting effects.",
-            "background": "Decorated but simpler, with smaller patterns or symbols.",
-            "value": "Still premium, though less overwhelming in its opulence.",
+            "style": "Polished and refined, but slightly simpler than top-tier.",
+            "colors": "Golden tones with subtle warm highlights.",
+            "effects": "Soft glow and slight shimmer.",
+            "background": "Fantasy-style with light ornamentation.",
+            "value": "Looks premium and rare.",
             "fill": "85%",
-            "color_tone": "warm tones (orange, golden, red)"
+            "color_tone": "warm tones (gold, orange, red)"
         },
         "mid-tier": {
-            "style": "Moderately detailed with a balance of elegance and simplicity.",
-            "colors": "A mix of gold and green, with a shift toward earthy tones.",
-            "effects": "Minimal glows or reflections, muted highlights.",
-            "background": "Smooth gradients or subtle textures.",
-            "value": "Appears valuable but lacks elite refinement.",
+            "style": "Game-style detail with balanced elegance.",
+            "colors": "Gold and green mix, more subdued.",
+            "effects": "Minimal glow, soft highlights.",
+            "background": "Simple gradients or abstract elements.",
+            "value": "Moderately rare and interesting.",
             "fill": "70%",
             "color_tone": "balanced tones (gold, green)"
         },
         "low-mid-tier": {
-            "style": "Simpler design with fewer textures and decorative patterns.",
-            "colors": "Cool tones such as teal, turquoise, or silvery-green.",
-            "effects": "Soft, diffused lighting with no significant glow.",
-            "background": "Minimalistic, basic gradients or textures.",
-            "value": "Functional but less ornate.",
+            "style": "Simpler cartoon-like style.",
+            "colors": "Cool tones like turquoise and silver-green.",
+            "effects": "No strong glow, smooth finish.",
+            "background": "Minimal background with soft color.",
+            "value": "Common but nicely designed.",
             "fill": "60%",
-            "color_tone": "cool tones (teal, silver, turquoise)"
+            "color_tone": "cool tones (teal, silver)"
         },
         "low-tier": {
-            "style": "Simplistic with almost no texture or ornamentation.",
-            "colors": "Cool, subdued tones like silver or light blue.",
-            "effects": "Flat or matte finish with no glow or lighting effects.",
-            "background": "Plain and unobtrusive, no embellishments.",
-            "value": "Basic, utilitarian, and clearly lower-tier.",
+            "style": "Flat, clean, minimal design.",
+            "colors": "Cool, muted tones like silver or blue.",
+            "effects": "No glow, matte finish.",
+            "background": "Plain or abstract background.",
+            "value": "Very basic icon.",
             "fill": "50%",
             "color_tone": "cool tones (blue, silver)"
         }
@@ -55,47 +55,38 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
         raise ValueError("Unknown tier specified.")
 
     system_prompt = f"""
-You are a prompt generator that produces visually rich, fantasy-style image generation prompts for AI models like MidJourney, DALL·E, or Stable Diffusion.
+You are an icon prompt generator for a fantasy-style slot game.
 
-You will be given:
-- A visual theme or style (e.g., “Mystic”, “Cyberpunk”, “Harry Potter”)
-- An icon name (e.g., “Golden Compass”, “Magic Hat”)
-- A stylistic tier (e.g., “Top-tier”, “Mid-tier”, etc.)
+Your task:
+Create a short, stylized, game-ready image description (1 sentence) for an icon.
+The icon is the central figure in the scene — like a symbol in a slot machine.
 
-🎨 Your task:
-Create a highly detailed and vivid image prompt describing:
-- The central icon as the **main figure** or **hero** of the image.
-- What is visually happening around it.
-- A brief sense of the background or setting.
+Use the following:
+- Theme: {style_theme}
+- Icon Name: {icon_name}
+- Stylistic Tier: {tier.capitalize()}
 
-The image should feel **alive**, **expressive**, and **immersive**, like key art for a fantasy game. Your tone should feel cinematic and rich in atmosphere.
-
-🏆 Follow these visual rules based on stylistic tier:
-- Style & Detail: {selected['style']}
-- Color Palette: {selected['colors']}
+Visual style (based on tier):
+- Style: {selected['style']}
+- Colors: {selected['colors']}
 - Effects: {selected['effects']}
 - Background: {selected['background']}
-- Value & Prestige: {selected['value']}
-- Object Focus: Fill {selected['fill']} of the image.
-- Color Tone: Emphasize {selected['color_tone']}.
+- Value: {selected['value']}
+- Object Focus: fills {selected['fill']} of the image
+- Tones: {selected['color_tone']}
 
-📦 Output: A single paragraph prompt, no bullet points or tags.
+Format:
+Output a single sentence description that brings the icon to life.
+Keep it punchy, vivid, and suitable for game art — no photorealism.
 
-📚 Examples:
-
+Examples:
 - A golden compass surrounded by a mystical glow, lying on an old map with islands and seas marked, and ships and outlines of unexplored lands can be seen in the background.
-
 - A luxurious golden train in retro style, racing along rails sparkling in the sunset light, against a backdrop of picturesque mountain landscapes and bridges stretching into the distance.
-
 - A golden gramophone with a shining bell stands on a wooden table in a cozy vintage room, the walls of which are decorated with paintings and antique clocks, and outside the window there is a view of the night city.
 
-Now generate a unique image prompt for the icon:
 
-Theme: {style_theme}  
-Icon Name: {icon_name}  
-Stylistic Tier: {tier.capitalize()}
+Now create a new prompt:
 """
-
     return system_prompt.strip()
 
 
@@ -135,3 +126,7 @@ Your task is to come up with a **completely original and imaginative visual them
 - Do not explain your reasoning or include anything outside the JSON.
 - Always invent something fresh and visually exciting, like a concept art universe.
 """.strip()
+
+
+if __name__ == "__main__":
+    print(build_system_prompt(tier="top-tier", style_theme="Mystic Cyberpunk", icon_name="Golden Compass"))
