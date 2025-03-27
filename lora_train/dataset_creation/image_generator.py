@@ -1,0 +1,75 @@
+from diffusers import DiffusionPipeline
+import torch
+import json
+from pathlib import Path
+
+class ImageGenerator:
+    def __init__(self, prompts_config_path: dict, save_images_dir_path: str, lora_path: str | None = None):
+        self.prompts_config_path = prompts_config_path
+        self.lora_path = lora_path
+        self.load_model()
+        self.generated_config_path = 'generated_config.json'
+        self.save_images_dir_path = save_images_dir_path
+
+    def load_model(self):
+        model_id = 'black-forest-labs/FLUX.1-dev'
+        self.pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
+        if self.lora_path:
+            print('Loading lora weights...')
+            
+
+    def generate_image(self, prompt: str, save_path: str):
+        self.pipe.load_lora_weights(self.lora_path)
+        image = self.pipe(
+            prompt='bbartstylecomp, A fantasy treasure chest made in a luxurious style.',
+            height=1024,
+            width=1024,
+            num_inference_steps=20,
+            guidance_scale=3.0,
+        ).images[0]
+        image.save(save_path)
+
+    
+    def process_prompt(self, prompt_data: dict, save_image_path: str) -> str:
+        image_prompt = prompt_data['prompt']
+        self.generate_image(image_prompt, save_image_path)
+        new_prompt_data = prompt_data.copy()
+        new_prompt_data['save_image_path'] = save_image_path
+        return new_prompt_data
+    
+    
+    def generate_images(self):
+        with open(self.prompts_config_path, 'r') as f:
+            prompts_config: list[dict] = json.load(f)
+        
+
+        if Path(self.generated_config_path).exists():
+            with open(self.generated_config_path, 'r') as f:
+                generated_config = json.load(f)
+        else:
+            generated_config = []
+        
+        for idx, prompt_data in enumerate(prompts_config):
+            save_image_path = f'{self.save_images_dir_path}/{idx}.png'
+            if Path(save_image_path).exists():
+                continue
+            new_prompt_data = self.process_prompt(prompt_data, save_image_path)
+            generated_config.append(new_prompt_data)
+        
+        with open(self.generated_config_path, 'w') as f:
+            json.dump(generated_config, f, indent=4)
+        
+
+
+if __name__ == '__main__':
+    prompts_config_path = '/root/flux/lora_train/dataset_creation/data/prompts.json'
+    save_images_dir_path = '/root/flux/lora_train/dataset_creation/data/generated_images'
+    lora_path = '/root/flux/lora_train/dataset_creation/lora_models/bbartstylefluxv8-000078_sergey_trained.safetensors'
+    
+
+    image_generator = ImageGenerator(
+        prompts_config_path=prompts_config_path,
+        save_images_dir_path=save_images_dir_path,
+        lora_path=lora_path
+    )
+    image_generator.generate_images()
