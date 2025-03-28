@@ -1,61 +1,30 @@
 def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     tier = tier.lower()
-
     tier_settings = {
         "top-tier": {
-            "style": "Very detailed and ornate, with glowing effects and rich textures.",
-            "colors": "Warm golden tones with radiant red and orange accents.",
-            "effects": "Sparkles, glow, and shiny highlights.",
-            "background": "Stylized fantasy background with ornate details.",
-            "value": "Feels legendary and highly valuable.",
-            "fill": "100%",
-            "color_tone": "warm tones (gold, orange, red)",
-            "layers": "Foreground (main icon), midground (decorative elements), background (distant scene)",
-            "size": "The icon should be very large and dominant, filling almost the entire frame. At least 20–30% of the object should include golden materials or ornaments to emphasize its richness."
+            "description": (
+                "A massive, dominant icon drenched in radiant, opulent golden hues "
+                "with dazzling glows and rich ornamentation that screams jackpot, "
+                "occupying almost the entire frame."
+            )
         },
         "high-tier": {
-            "style": "Polished and refined, but slightly simpler than top-tier.",
-            "colors": "Golden tones with subtle warm highlights.",
-            "effects": "Soft glow and slight shimmer.",
-            "background": "Fantasy-style with light ornamentation.",
-            "value": "Looks premium and rare.",
-            "fill": "85%",
-            "color_tone": "warm tones (gold, orange, red)",
-            "layers": "Foreground (main icon), midground (supporting details), background (light stylization)",
-            "size": "The icon should be large and clearly central."
+            "description": (
+                "A large, eye-catching icon with warm golden accents and intricate details, "
+                "vibrant and premium yet slightly less grand than a jackpot display."
+            )
         },
         "mid-tier": {
-            "style": "Game-style detail with balanced elegance.",
-            "colors": "Gold and green mix, more subdued.",
-            "effects": "Minimal glow, soft highlights.",
-            "background": "Simple gradients or abstract elements.",
-            "value": "Moderately rare and interesting.",
-            "fill": "70%",
-            "color_tone": "balanced tones (gold, green)",
-            "layers": "Foreground (main icon), background (simple pattern or color gradient)",
-            "size": "The icon should be medium-sized and balanced within the frame."
-        },
-        "low-mid-tier": {
-            "style": "Cartoon-like game art with smoother finish.",
-            "colors": "Cool tones like turquoise and silver-green.",
-            "effects": "Soft surfaces, subtle reflections.",
-            "background": "Soft color backgrounds with minimal design.",
-            "value": "Fitting for mid-rarity visual tier.",
-            "fill": "60%",
-            "color_tone": "cool tones (teal, silver)",
-            "layers": "Foreground (icon), background (clean backdrop or gradient)",
-            "size": "The icon should be small to medium-sized with space around it."
+            "description": (
+                "A balanced, moderate-sized icon with clear details and a mix of warm neutral tones, "
+                "ensuring strong visual impact while leaving room for layered background elements."
+            )
         },
         "low-tier": {
-            "style": "Stylized and clean design for icon-based gameplay.",
-            "colors": "Cool, muted tones like silver or blue.",
-            "effects": "No glow, with smooth matte texture.",
-            "background": "Soft or cold abstract background that doesn’t distract.",
-            "value": "Less ornate but visually polished.",
-            "fill": "50%",
-            "color_tone": "cool tones (blue, silver)",
-            "layers": "Foreground (main icon), background (subtle, clean, cool-toned)",
-            "size": "The icon should be small and less visually dominant, but clearly defined and readable."
+            "description": (
+                "A small, modest icon styled in cool, icy blue tones with minimal ornamentation, "
+                "subtly set against a clean, contrasting backdrop."
+            )
         }
     }
 
@@ -64,41 +33,22 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
         raise ValueError("Unknown tier specified.")
 
     system_prompt = f"""
-You are an icon prompt generator for a fantasy-style slot game.
+You are a slot game icon prompt generator.
 
 Task:
-Generate a **one-sentence** prompt describing a stylized icon as it appears in a slot game. The image must be clearly layered and composed for visual clarity and appeal.
+Generate a **one-sentence** prompt that vividly describes a stylized slot game icon in a layered scene.
+The image must clearly separate the **foreground (the icon)**, a subtle **midground (decorative elements)**, 
+and a simple **background** to enhance clarity and appeal.
 
-Key Instructions:
-- The icon is the central figure of the image.
-- Break the scene into 2–3 **visual layers**: foreground (icon), midground (decorative elements), background (distant or simple setting). Use fewer layers for lower-tier icons.
-- Ensure the **main icon contrasts** with the background — it must not blend in. Background tones should differ.
-- {selected['size']}
-- Style: {selected['style']}
-- Colors: {selected['colors']}
-- Effects: {selected['effects']}
-- Background: {selected['background']}
-- Visual Value: {selected['value']}
-- Filling: {selected['fill']} of the image
-- Overall Tones: {selected['color_tone']}
+Guidelines:
+- Theme: {style_theme}
+- Icon Name: {icon_name}
+- Tier: {tier.capitalize()}
+- {selected['description']}
+- The icon must be distinct from its background with clear contrast.
+- Use concise, vivid language to evoke the look and feel of a slot game reward.
 
-Layering: {selected['layers']}
-
-Format:
-Output a **single, punchy sentence** describing the icon in its slot-style fantasy scene.
-
-Examples:
-- A golden compass glowing above a mystical map, with shimmering islands in the midground and ancient scrolls fading in the background.
-- A retro train gleaming in the foreground, rails curving through spark-lit cliffs, and a golden sunset stretching across the distant skyline.
-- A shining gramophone on a wooden table, with candlelight flickering in the middle and an old city through the window behind it.
-
-And main:
-The image should have an active visual interaction with the viewer.
-
-Now generate a new image prompt:
-Theme: {style_theme}  
-Icon Name: {icon_name}  
-Stylistic Tier: {tier.capitalize()}
+Now generate the prompt sentence.
 """
 
     return system_prompt.strip()
