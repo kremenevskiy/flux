@@ -3,6 +3,7 @@ from lora_train.dataset_creation import gpt_api, gpt_prompts
 import json
 from pathlib import Path
 import asyncio
+from tqdm import tqdm
 
 class DatasetCreator:
     def __init__(self):
@@ -49,7 +50,6 @@ class PromptCreator:
                 user_prompt=f"Theme: {theme}\nIcon: {icon}\nStylistic tier: {tier}",
                 return_json=False
             )
-            print(prompt)
             prompts.append({
                 "theme": theme,
                 "icon": icon,
@@ -75,8 +75,9 @@ class PromptCreator:
             images_promts = []
         i = 0
         should_stop = False
-        for new_theme in generated_themes:
+        for theme_idx, new_theme in tqdm(enumerate(generated_themes), desc="Themes"):
             theme = new_theme["theme"]
+            print(f"Processing {theme_idx} / {len(generated_themes)} theme: {theme}")
             for icon in new_theme["icons"]:
                 i += 1
                 if i > num_icons_to_generate:
@@ -90,9 +91,15 @@ class PromptCreator:
 
                 images_promts.extend(icon_prompts)
 
+                if i % 10 == 0:
+                    with open(output_prompt_path, 'w') as f:
+                        json.dump(images_promts, f, indent=4)
+                    logger.info(f"Saved prompts to {output_prompt_path}")
+
                 
             if should_stop:
                 break
+            
 
         with open(output_prompt_path, 'w') as f:
             json.dump(images_promts, f, indent=4)
@@ -100,16 +107,16 @@ class PromptCreator:
 
 async def generate_themes():
     creator = DatasetCreator()
-    previous_themes_path = "themes_with_icons.json"
-    output_path = "style_icons_new.json"
-    await creator.generate_and_save_style_icons(num_styles=50, previous_themes_path=previous_themes_path, output_path=output_path)
+    previous_themes_path = "style_icons_new.json"
+    output_path = "style_icons_new_2.json"
+    await creator.generate_and_save_style_icons(num_styles=100, previous_themes_path=previous_themes_path, output_path=output_path)
 
 
 async def generate_prompts():
     creator = PromptCreator()
-    themes_path = "style_icons_new.json"
+    themes_path = "style_icons_new_2.json"
     output_prompt_path = "prompts_new_6.json"
-    num_icons_to_generate = 20
+    num_icons_to_generate = 100000
     await creator.generate_and_save_style_icons(themes_path=themes_path, output_prompt_path=output_prompt_path, num_icons_to_generate=num_icons_to_generate)
 
 
