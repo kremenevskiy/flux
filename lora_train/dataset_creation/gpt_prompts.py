@@ -3,27 +3,33 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     tier_settings = {
         "top-tier": {
             "description": (
-                "A massive, dominant icon drenched in radiant, opulent golden hues "
-                "with dazzling glows and rich ornamentation that screams jackpot, "
-                "occupying almost the entire frame."
+                "A striking icon with exquisite detail and luxurious textures, rendered in dominant, radiant golden hues "
+                "with vibrant red and orange accents, dynamic glows, sparkles, and polished reflections against an ornate backdrop of filigree and gems, "
+                "occupying 100% of the image to exude grandeur and exclusivity."
             )
         },
         "high-tier": {
             "description": (
-                "A large, eye-catching icon with warm golden accents and intricate details, "
-                "vibrant and premium yet slightly less grand than a jackpot display."
+                "A refined icon with elegant detail and subtle intricacies, rendered in warm bronze tones with delicate red or orange highlights, "
+                "showcasing gentle glows and soft lighting effects on a simpler patterned background, occupying 85% of the image for a premium look."
             )
         },
         "mid-tier": {
             "description": (
-                "A balanced, moderate-sized icon with clear details and a mix of warm neutral tones, "
-                "ensuring strong visual impact while leaving room for layered background elements."
+                "A balanced icon with moderate detail and a blend of green and earthy hues, featuring minimal glows and muted reflections on a smooth gradient backdrop, "
+                "occupying 70% of the image for clear visual impact."
+            )
+        },
+        "low-mid-tier": {
+            "description": (
+                "A simpler icon with minimal textures and decorative patterns, rendered in cool tones like teal, turquoise, or silvery-green, "
+                "with soft, diffused lighting and a minimalistic background of basic gradients, occupying 60% of the image for a functional yet appealing look."
             )
         },
         "low-tier": {
             "description": (
-                "A small, modest icon styled in cool, icy blue tones with minimal ornamentation, "
-                "subtly set against a clean, contrasting backdrop."
+                "A minimalistic icon with almost no ornamentation, rendered in cool, subdued tones such as silver or light blue, "
+                "with a flat or matte finish and an unobtrusive plain background, occupying 50% of the image to clearly denote lower significance."
             )
         }
     }
@@ -45,8 +51,8 @@ Guidelines:
 - Icon Name: {icon_name}
 - Tier: {tier.capitalize()}
 - {selected['description']}
-- The icon must be distinct from its background with clear contrast.
-- Use concise, vivid language to evoke the look and feel of a slot game reward.
+- Ensure the icon contrasts distinctly with its background.
+- Use concise, vivid language to evoke the look and feel of a slot game icon.
 
 Now generate the prompt sentence.
 """
