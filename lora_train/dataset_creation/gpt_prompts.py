@@ -3,33 +3,33 @@ def build_system_prompt(tier: str, style_theme: str, icon_name: str) -> str:
     tier_settings = {
         "top-tier": {
             "description": (
-                "A striking icon with exquisite detail and luxurious textures, rendered in dominant, radiant golden hues "
-                "with vibrant red and orange accents, dynamic glows, sparkles, and polished reflections against an ornate backdrop of filigree and gems, "
-                "occupying 100% of the image to exude grandeur and exclusivity."
+                "A top-tier icon with exquisite, luxurious detail and intricate textures, rendered in dominant, radiant golden hues "
+                "with vibrant red and orange accents. It features dynamic glows, sparkles, and polished reflections against an ornate backdrop "
+                "of filigree and gems, occupying 90-100% of the image to serve as the primary symbol in its group."
             )
         },
         "high-tier": {
             "description": (
-                "A refined icon with elegant detail and subtle intricacies, rendered in warm bronze tones with delicate red or orange highlights, "
-                "showcasing gentle glows and soft lighting effects on a simpler patterned background, occupying 85% of the image for a premium look."
+                "A high-tier icon with refined detail and elegant textures, rendered in warm tones of pink, orange, or red with subtle highlights. "
+                "It boasts gentle glows and soft reflections on a tastefully decorated background, occupying around 85% of the image for a premium look."
             )
         },
         "mid-tier": {
             "description": (
-                "A balanced icon with moderate detail and a blend of green and earthy hues, featuring minimal glows and muted reflections on a smooth gradient backdrop, "
-                "occupying 70% of the image for clear visual impact."
+                "A mid-tier icon with balanced detail and graceful design, rendered in warm hues of pink, orange, or red. "
+                "It maintains a strong visual presence while being approximately 30% smaller than the top-tier symbol, occupying about 70% of the image."
             )
         },
         "low-mid-tier": {
             "description": (
-                "A simpler icon with minimal textures and decorative patterns, rendered in cool tones like teal, turquoise, or silvery-green, "
-                "with soft, diffused lighting and a minimalistic background of basic gradients, occupying 60% of the image for a functional yet appealing look."
+                "A low-mid-tier icon with attractive design and clear detail, rendered in cool tones such as green or blue (teal or turquoise) with tasteful accents, "
+                "occupying around 60% of the image to denote its lower hierarchy while remaining visually engaging."
             )
         },
         "low-tier": {
             "description": (
-                "A minimalistic icon with almost no ornamentation, rendered in cool, subdued tones such as silver or light blue, "
-                "with a flat or matte finish and an unobtrusive plain background, occupying 50% of the image to clearly denote lower significance."
+                "A low-tier icon with a beautifully crafted design in cool, subdued tones like silver or light blue, featuring a graceful finish and a clean backdrop, "
+                "occupying about 50% of the image to clearly indicate its lesser significance while still being appealing."
             )
         }
     }
@@ -51,8 +51,18 @@ Guidelines:
 - Icon Name: {icon_name}
 - Tier: {tier.capitalize()}
 - {selected['description']}
-- Ensure the icon contrasts distinctly with its background.
-- Use concise, vivid language to evoke the look and feel of a slot game icon.
+- Ensure the icon is centered and contrasts distinctly with its background.
+- All icons must be visually appealing; differences lie solely in color and size.
+- Rendering Details:
+  - For top-tier: The primary symbol in its group, rendered with luxurious, opulent elements, abundant gold and lavish details, multicolored, filling 90-100% of the image.
+  - For high-tier and mid-tier: Use warm colors such as pink, orange, and red.
+  - For low-mid-tier and low-tier: Use cool colors such as green and blue.
+  - Visual interaction with the viewer is essential, especially if the symbol represents an animal or a human.
+
+Examples of good prompts:
+- A golden compass surrounded by a mystical glow, lying on an old map with islands and seas marked, while ships and outlines of unexplored lands appear in the background.
+- A luxurious golden train in retro style, racing along rails sparkling in the sunset light, against a backdrop of picturesque mountain landscapes and distant bridges.
+- A golden gramophone with a shining bell stands on a wooden table in a cozy vintage room, with paintings and antique clocks adorning the walls and a night city visible through the window.
 
 Now generate the prompt sentence.
 """

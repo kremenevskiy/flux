@@ -32,7 +32,13 @@ class DatasetCreator:
 class PromptCreator:
     def __init__(self):
         self.gpt_api = gpt_api.GptApi()
-        self.style_tiers = ['top-tier', 'high-tier', 'mid-tier', 'low-mid-tier', 'low-tier']
+        self.style_tiers = [
+            'top-tier',
+            'high-tier',
+            'mid-tier',
+            'low-mid-tier',
+            'low-tier'
+        ]
 
 
     async def generate_prompts_for_icon(self, theme: str, icon: str) -> list[dict]:
@@ -42,8 +48,8 @@ class PromptCreator:
                 system_prompt=gpt_prompts.build_system_prompt(tier, theme, icon),
                 user_prompt=f"Theme: {theme}\nIcon: {icon}\nStylistic tier: {tier}",
                 return_json=False
-
             )
+            print(prompt)
             prompts.append({
                 "theme": theme,
                 "icon": icon,
@@ -102,8 +108,8 @@ async def generate_themes():
 async def generate_prompts():
     creator = PromptCreator()
     themes_path = "style_icons_new.json"
-    output_prompt_path = "prompts.json"
-    num_icons_to_generate = 10
+    output_prompt_path = "prompts_new_6.json"
+    num_icons_to_generate = 20
     await creator.generate_and_save_style_icons(themes_path=themes_path, output_prompt_path=output_prompt_path, num_icons_to_generate=num_icons_to_generate)
 
 
