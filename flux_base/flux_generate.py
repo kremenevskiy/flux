@@ -96,16 +96,16 @@ def infer(
 
 
 def get_lora_path(tier: str | None = None) -> str:
-    if tier == 'top-tier':
+    if tier == 'pic_1':
         return 'lora_models/lora_pic_a.safetensors'
-    elif tier == 'high-tier':
+    elif tier == 'pic_2':
         return 'lora_models/lora_pic_b.safetensors'
-    elif tier == 'mid-tier':
+    elif tier == 'pic_3':
         return 'lora_models/lora_pic_c.safetensors'
-    elif tier == 'low-tier':
+    elif tier == 'pic_4':
         return 'lora_models/lora_pic_d.safetensors'
-    elif tier == 'low-tier':
-        return 'lora_models/lora_pic_d.safetensors'
+    elif tier == 'pic_5':
+        return 'lora_models/lora_pic_e.safetensors'
     raise ValueError(f'Unknown tier: {tier}')
 
 

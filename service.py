@@ -49,8 +49,8 @@ async def flux_generate_image(
     )
 
 
-@app.post('/flux-generate-image-with-lora/')
-async def flux_generate_image_with_lora(
+@app.post('/flux-generate-image-with-tier/')
+async def flux_generate_image_with_tier(
     prompt: str = Form(...),
     tier: str = Form(...),
     guidance_scale: float = Form(3.5),
