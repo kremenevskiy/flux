@@ -3,6 +3,7 @@ import torch
 import json
 from pathlib import Path
 import random
+from tqdm import tqdm
 
 class ImageGenerator:
     def __init__(self, prompts_config_path: dict, save_images_dir_path: str, lora_path: str | None = None, prompt_prefix: str | None = None):
@@ -59,7 +60,9 @@ class ImageGenerator:
         else:
             generated_config = []
         
-        for idx, prompt_data in enumerate(prompts_config):
+        for idx, prompt_data in tqdm(enumerate(prompts_config)):
+            if idx % 20 == 0:
+                print(f'Processing prompt {idx}/{len(prompts_config)}')
             if self.lora_path:
                 save_image_path = f'{self.save_images_dir_path}/{prompt_data["tier"]}/{prompt_data["theme"]}_{prompt_data["icon"]}_{idx}.png'
             else:
