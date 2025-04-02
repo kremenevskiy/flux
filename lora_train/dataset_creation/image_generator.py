@@ -2,6 +2,8 @@ from diffusers import DiffusionPipeline
 import torch
 import json
 from pathlib import Path
+import random
+from tqdm import tqdm
 
 class ImageGenerator:
     def __init__(self, prompts_config_path: dict, save_images_dir_path: str, lora_path: str | None = None, prompt_prefix: str | None = None):
@@ -24,12 +26,16 @@ class ImageGenerator:
     def generate_image(self, prompt: str, save_path: str):
         if self.lora_path:
             prompt = f'{self.prompt_prefix}, {prompt}'
+        weights = [0.8, 0.85, 0.9]
+        guidance_scale = [3.0, 3.25, 3.5]
+        inference_steps = [20, 25, 28, 30]
+        self.pipe.set_adapters(["high"], adapter_weights=[random.choice(weights)])
         image = self.pipe(
             prompt=prompt,
             height=1024,
             width=1024,
-            num_inference_steps=20,
-            guidance_scale=3.5,
+            num_inference_steps=random.choice(inference_steps),
+            guidance_scale=random.choice(guidance_scale),
         ).images[0]
         image.save(save_path)
         
@@ -54,7 +60,9 @@ class ImageGenerator:
         else:
             generated_config = []
         
-        for idx, prompt_data in enumerate(prompts_config):
+        for idx, prompt_data in tqdm(enumerate(prompts_config)):
+            if idx % 20 == 0:
+                print(f'Processing prompt {idx}/{len(prompts_config)}')
             if self.lora_path:
                 save_image_path = f'{self.save_images_dir_path}/{prompt_data["tier"]}/{prompt_data["theme"]}_{prompt_data["icon"]}_{idx}.png'
             else:
@@ -72,15 +80,16 @@ class ImageGenerator:
 
 
 if __name__ == '__main__':
-    prompts_config_path = '/root/flux/lora_train/dataset_creation/data/prompts.json'
+    prompts_config_path = '/root/flux/lora_train/dataset_creation/data/prompts_low_mid_tier_1.json'
     save_images_dir_path = '/root/flux/lora_train/dataset_creation/data/generated_images'
-    lora_path = '/root/flux/lora_train/dataset_creation/lora_models/bbartstylefluxv8.safetensors'
+    lora_path = '/root/flux/lora_train/dataset_creation/lora_models/lora_style.safetensors'
     
 
     image_generator = ImageGenerator(
         prompts_config_path=prompts_config_path,
         save_images_dir_path=save_images_dir_path,
-        lora_path=None,
-        prompt_prefix='bbartstylecomp'
+        lora_path=lora_path,
+        # prompt_prefix='bbartstylecomp'
+        prompt_prefix='bbartstylecomp, fantasy cartoon style'
     )
     image_generator.generate_images()
