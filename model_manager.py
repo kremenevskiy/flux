@@ -11,7 +11,7 @@ class ModelManager:
         self.current_model_name = None
         self.model = None
 
-    def get_model(self, model_name: str):
+    def get_model(self, model_name: str, **kwargs):
         if self.current_model_name == model_name and self.model is not None:
             return self.model
 
@@ -21,6 +21,8 @@ class ModelManager:
         # Load the requested model
         if model_name == 'flux_generate':
             self.model = self.load_flux_generate_model()
+        elif model_name == 'flux_generate_with_lora':
+            self.model = self.load_flux_with_lora(kwargs['lora_path'], kwargs['adapter_weights'])
         elif model_name == 'flux_inpaint':
             self.model = self.load_flux_inpaint_model()
         elif model_name == 'flux_canny':
@@ -79,4 +81,11 @@ class ModelManager:
         from flux_lora.comfy_inf_2 import get_model_pipe
 
         pipe = get_model_pipe()
+        return pipe
+
+
+    def load_flux_with_lora(self, lora_path: str, adapter_weights: float=0.9):
+        from flux_base.flux_generate import get_model_pipe_with_lora
+
+        pipe = get_model_pipe_with_lora(lora_path, adapter_weights)
         return pipe

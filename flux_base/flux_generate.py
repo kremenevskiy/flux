@@ -43,6 +43,14 @@ def get_model_pipe():
     return pipe, good_vae
 
 
+def get_model_pipe_with_lora(lora_path: str, adapter_weights: float=0.9):
+    model_id = 'black-forest-labs/FLUX.1-dev'
+    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
+    pipeline.load_lora_weights(lora_path, adapter_name="lora_adapter")
+    pipeline.set_adapters(["lora_adapter"], adapter_weights=[adapter_weights])
+    return pipeline
+
+
 # @spaces.GPU(duration=75)
 def infer(
     prompt: str,
@@ -80,6 +88,66 @@ def infer(
         good_vae=good_vae,
     ):
         img, seed = img, seed
+    
+    torch.cuda.empty_cache()
+    return img
+
+
+
+
+def get_lora_path(tier: str | None = None) -> str:
+    if tier == 'top-tier':
+        return 'lora_models/lora_pic_a.safetensors'
+    elif tier == 'high-tier':
+        return 'lora_models/lora_pic_b.safetensors'
+    elif tier == 'mid-tier':
+        return 'lora_models/lora_pic_c.safetensors'
+    elif tier == 'low-tier':
+        return 'lora_models/lora_pic_d.safetensors'
+    elif tier == 'low-tier':
+        return 'lora_models/lora_pic_d.safetensors'
+    raise ValueError(f'Unknown tier: {tier}')
+
+
+def infer_with_tier(
+    prompt: str,
+    model_manager: model_manager.ModelManager,
+    tier: str | None = None,
+    seed: int = 42,
+    randomize_seed: bool = True,
+    width: int = 1024,
+    height: int = 1024,
+    guidance_scale: float = 3.5,
+    num_inference_steps: int = 28,
+) -> Image.Image:
+    if randomize_seed and seed == 0:
+        seed = random.randint(0, 10000)
+    generator = torch.Generator().manual_seed(seed)
+
+    # Get the model from the model manager
+    if model_manager is None:
+        raise ValueError('Model manager is required')
+    
+
+    lora_path = get_lora_path(tier)
+    pipe = model_manager.get_model('flux_generate_with_lora', lora_path=lora_path, adapter_weights=0.9)
+    meta = {
+        'seed': seed,
+        'guidance_scale': guidance_scale,
+        'num_inference_steps': num_inference_steps,
+        'lora_path': lora_path,
+    }
+    print('params: ', meta)
+
+    img = pipe(
+        prompt=prompt,
+        height=height,
+        width=width,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
+        generator=generator,
+    ).images[0]
+
     
     torch.cuda.empty_cache()
     return img
