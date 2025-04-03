@@ -5,7 +5,7 @@ config:
     - cache_latents_to_disk: true
       caption_dropout_rate: 0.05
       caption_ext: txt
-      folder_path: data/processed_a_only_trigger_word 
+      folder_path: data/pic_a
       resolution:
       - 512
       - 768
@@ -15,10 +15,10 @@ config:
     model:
       is_flux: true
       name_or_path: black-forest-labs/FLUX.1-dev
-      quantize: true
+      quantize: false
     network:
-      linear: 16
-      linear_alpha: 16
+      linear: 64
+      linear_alpha: 64
       type: lora
       network_kwargs:
           only_if_contains:
@@ -42,6 +42,10 @@ config:
       - "[trigger], The image features a slot game icon of a wizard's spell book. The book has an aged leather cover with glowing magical runes embossed on the front. A golden clasp secures the book, and faint magical energy swirls around it. The background has deep purples and blues, enhancing the mystical aura of the artifact."
       - "[trigger], The image depicts an ancient Egyptian slot icon featuring a golden scarab beetle. The beetle is encrusted with small gemstone details and has an intricate design, symbolizing luck and protection. The background consists of sand-hued textures and faint hieroglyphics, enhancing the historical and mystical theme of the icon."
       - "[trigger], The image showcases a sleek and futuristic slot game icon featuring a neon-lit cyber coin. The coin appears to be floating, with intricate circuit patterns glowing in blue and purple. The metallic surface reflects ambient neon lights, giving it a high-tech aesthetic. The background features a digital grid, reinforcing the cyberpunk theme."
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, Oversized slice of apple pie with glowing caramel lattice, served on a gold-rimmed plate with stars and stripes pattern, steam rising into heart shapes"
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, a cat with hat in castle."
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, Golden Elvis-style performer mid-spin with glowing red guitar, star-shaped sunglasses, cape trailing fire and glitter, background: Vegas stage bursting with light and gold coins"
+      - "[trigger], big size, ultra close up portrait, pica style, luxurious style, gold, high importance, warm tones, slot icon style, ultra close up, Puss in Boots wearing oversized golden hat with ruby feather, ornate scarlet cloak with embroidered lions, holding a glowing rapier encrusted with emeralds, background: tavern fireplace and flickering candlelight — dashing, dangerous, deluxe"
       sample_every: 1000
       sample_steps: 20
       sampler: flowmatch
@@ -61,12 +65,12 @@ config:
         ema_decay: 0.99
         use_ema: true
       gradient_accumulation_steps: 1
-      gradient_checkpointing: true
+      gradient_checkpointing: false
       lr: 1e-4
       noise_scheduler: flowmatch
       optimizer: adamw8bit
-      skip_first_sample: true
-      steps: 8000
+      skip_first_sample: false
+      steps: 16000
       train_text_encoder: false
       train_unet: true
     training_folder: output

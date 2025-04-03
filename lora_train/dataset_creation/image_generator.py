@@ -59,8 +59,12 @@ class ImageGenerator:
                 generated_config = json.load(f)
         else:
             generated_config = []
+
+        # For shuffling prompts
+        prompt_indices = [(idx, prompt) for idx, prompt in enumerate(prompts_config)]
+        random.shuffle(prompt_indices)
         
-        for idx, prompt_data in tqdm(enumerate(prompts_config)):
+        for (idx, prompt_data) in tqdm(prompt_indices):
             if idx % 20 == 0:
                 print(f'Processing prompt {idx}/{len(prompts_config)}')
             if self.lora_path:
@@ -80,7 +84,7 @@ class ImageGenerator:
 
 
 if __name__ == '__main__':
-    prompts_config_path = '/root/flux/lora_train/dataset_creation/data/prompts_low_mid_tier_1.json'
+    prompts_config_path = '/root/flux/lora_train/dataset_creation/data/prompts_low_tier_1.json'
     save_images_dir_path = '/root/flux/lora_train/dataset_creation/data/generated_images'
     lora_path = '/root/flux/lora_train/dataset_creation/lora_models/lora_style.safetensors'
     

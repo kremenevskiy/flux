@@ -5,7 +5,7 @@ config:
     - cache_latents_to_disk: true
       caption_dropout_rate: 0.05
       caption_ext: txt
-      folder_path: data/processed_a
+      folder_path: data/pic_a_2
       resolution:
       - 512
       - 768
@@ -15,43 +15,29 @@ config:
     model:
       is_flux: true
       name_or_path: black-forest-labs/FLUX.1-dev
-      quantize: true
+      quantize: false
     network:
-      linear: 16
-      linear_alpha: 16
+      linear: 64
+      linear_alpha: 64
       type: lora
     sample:
       guidance_scale: 4
       height: 1024
       neg: ''
       prompts:
-      - '[trigger], A woman in a cozy red sweater stands by a beautifully decorated
-        Christmas tree, holding a steaming mug of hot cocoa. The warm glow of fairy
-        lights and the scent of pine fill the air, creating a festive and magical
-        atmosphere.'
-      - "[trigger], A woman in a sleek black dress leans casually against a shiny\
-        \ red Porsche, her sunglasses reflecting the city skyline. The car\u2019s\
-        \ polished surface gleams under the sunlight, exuding elegance and sophistication."
-      - '[trigger], A woman stands barefoot on a sandy beach, the waves gently lapping
-        at her feet. She wears a flowing white dress that flutters in the ocean breeze,
-        her gaze fixed on the horizon as the sun sets in a blaze of orange and pink.'
-      - '[trigger], A girl smiles brightly as she takes a selfie in front of a vibrant
-        street mural. Her phone captures the colorful artwork behind her, while passersby
-        blur in the background, adding a lively energy to the scene.'
-      - '[trigger], A woman sits at a candlelit table in an upscale restaurant, her
-        elegant dress catching the soft light. She sips a glass of wine, her eyes
-        scanning the menu as the ambient chatter and clinking of glasses create a
-        warm, inviting atmosphere.'
-      - '[trigger], A confident woman stands on a stage, holding a microphone as she
-        addresses a large audience. Her poised demeanor and expressive gestures command
-        attention, while the spotlight highlights her against the backdrop of a packed
-        auditorium.'
-      - "[trigger], A woman stands in a room filled with an array of large, extravagant\
-        \ bouquets\u2014each one unique, from towering sunflowers to cascading orchids\
-        \ and vibrant peonies. The bouquets are artfully arranged in vases of different\
-        \ shapes and sizes, their colors and fragrances blending into a breathtaking\
-        \ display. She gently holds a single rose, her expression serene as she admires\
-        \ the floral masterpiece around her."
+      - "[trigger], The image depicts a glossy icon featuring a golden horseshoe. The horseshoe is slightly curved with a polished metallic surface, adorned with small rivets along its edges. The background has a radiant glow, emphasizing its lucky symbolism. The frame around the icon is rounded and ornate, enhancing the premium feel of the image."
+      - "[trigger], The image showcases a vibrant slot game icon featuring a juicy watermelon slice. The fruit is depicted in a semi-realistic style, with rich red flesh, dark seeds, and a glossy green rind. Droplets of moisture glisten on the surface, making it appear fresh and appetizing. The square frame has rounded edges and a subtle glow, giving the icon a premium feel."
+      - "[trigger], The image features a dynamic slot icon depicting a treasure chest overflowing with gold coins. The chest is ornately decorated with metal reinforcements and a large lock. The lid is slightly open, revealing the shimmering gold inside. The background includes a faint glow, emphasizing the richness and excitement of the treasure."
+      - "[trigger], The image depicts a mystical slot game icon featuring a glowing crystal ball. The ball is held by an elegant metallic stand with ornate carvings. Inside the transparent sphere, swirling magical energy is visible. The background has a gradient of deep blues and purples, adding a sense of mystery and enchantment to the composition."
+      - "[trigger], The image showcases a glossy icon featuring a red lucky seven symbol. The number '7' is designed in a bold, curvy style with a reflective, metallic sheen. Small sparkles and highlights give it a polished and premium look. The background is a gradient of fiery reds and oranges, reinforcing the theme of luck and excitement."
+      - "[trigger], The image depicts a majestic phoenix slot icon. The mythical bird is shown mid-flight with its wings spread wide, composed of vibrant flames. The feathers transition from deep reds to bright golds, giving the appearance of burning embers. The background is dark with fiery accents, making the phoenix stand out as a powerful and legendary figure."
+      - "[trigger], The image features a slot game icon of a wizard's spell book. The book has an aged leather cover with glowing magical runes embossed on the front. A golden clasp secures the book, and faint magical energy swirls around it. The background has deep purples and blues, enhancing the mystical aura of the artifact."
+      - "[trigger], The image depicts an ancient Egyptian slot icon featuring a golden scarab beetle. The beetle is encrusted with small gemstone details and has an intricate design, symbolizing luck and protection. The background consists of sand-hued textures and faint hieroglyphics, enhancing the historical and mystical theme of the icon."
+      - "[trigger], The image showcases a sleek and futuristic slot game icon featuring a neon-lit cyber coin. The coin appears to be floating, with intricate circuit patterns glowing in blue and purple. The metallic surface reflects ambient neon lights, giving it a high-tech aesthetic. The background features a digital grid, reinforcing the cyberpunk theme."
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, Oversized slice of apple pie with glowing caramel lattice, served on a gold-rimmed plate with stars and stripes pattern, steam rising into heart shapes"
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, a cat with hat in castle."
+      - "[trigger], big size, ultra close up portrait, takes up all the space in the image, luxurious style, gold, high importance, slot icon style, warm tones, Golden Elvis-style performer mid-spin with glowing red guitar, star-shaped sunglasses, cape trailing fire and glitter, background: Vegas stage bursting with light and gold coins"
+      - "[trigger], big size, ultra close up portrait, pica style, luxurious style, gold, high importance, warm tones, slot icon style, ultra close up, Puss in Boots wearing oversized golden hat with ruby feather, ornate scarlet cloak with embroidered lions, holding a glowing rapier encrusted with emeralds, background: tavern fireplace and flickering candlelight — dashing, dangerous, deluxe"
       sample_every: 1000
       sample_steps: 20
       sampler: flowmatch
@@ -72,15 +58,15 @@ config:
         use_ema: true
       gradient_accumulation_steps: 1
       gradient_checkpointing: true
-      lr: 1e-4
+      lr: 5e-5
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true
-      steps: 8000
+      steps: 32000
       train_text_encoder: false
       train_unet: true
     training_folder: output
-    trigger_word: pic_a
+    trigger_word: pic_a, luxurious style, gold, high importance, ultra close up
     type: sd_trainer
 job: extension
 meta:

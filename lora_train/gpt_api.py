@@ -29,7 +29,7 @@ class GptApi:
     def __init__(self, model_name: str | None = None):
         self.model_name = model_name if model_name else config.GPTConf.model_name
         self.client = openai.OpenAI(
-            api_key=os.environ['OPENAI_KEY'],
+            api_key=os.environ['OPENAI_PROXY_KEY'],
             base_url='https://api.proxyapi.ru/openai/v1',
         )
 

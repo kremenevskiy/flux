@@ -65,7 +65,7 @@ class DatasetProcessor:
 
 
 if __name__ == '__main__':
-    ds_processor = DatasetProcessor(trigger_word='pic_e', put_only_trigger_word=True)
-    ds_path = '/root/imgs_ds/pic_e'
-    output_path = '/root/data/processed_e_only_trigger_word/'
+    ds_processor = DatasetProcessor(trigger_word='pic_a, luxurious style, gold, high importance, ultra close up', put_only_trigger_word=False)
+    ds_path = '/root/imgs_ds/pic_a'
+    output_path = '/root/data/pic_a_2/'
     ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)
