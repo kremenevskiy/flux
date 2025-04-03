@@ -49,6 +49,38 @@ async def flux_generate_image(
     )
 
 
+@app.post('/flux-generate-image-with-tier/')
+async def flux_generate_image_with_tier(
+    prompt: str = Form(...),
+    tier: str = Form(...),
+    guidance_scale: float = Form(3.5),
+    num_inference_steps: int = Form(28),
+    seed: int = Form(0),
+    width: int = Form(1024),
+    height: int = Form(1024),
+) -> FileResponse:
+    img = flux_generate.infer_with_tier(
+        prompt=prompt,
+        model_manager=model_manager,
+        tier=tier,
+        width=width,
+        height=height,
+        seed=seed,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
+    )
+    img_save_path = (
+        Path(config.config.dirs.generation_dir) / f'{utils_service.get_hash_from_uuid()}.png'
+    )
+    img.save(img_save_path)
+
+    return FileResponse(
+        path=str(img_save_path),
+        media_type='image/jpeg',
+        filename=f'processed_{img_save_path.name}',
+    )
+
+
 @app.post('/flux-inpaint-image/')
 async def flux_inpaint_image(
     prompt: str = Form(...),
