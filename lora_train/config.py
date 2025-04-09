@@ -3,7 +3,11 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
-load_dotenv('.env')
+
+if os.path.exists('/root/flux/.env'):
+    load_dotenv('/root/flux/.env')
+else:
+    raise FileNotFoundError('No .env file found')
 
 
 @dataclass(frozen=True)
