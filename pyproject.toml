@@ -1,26 +1,25 @@
-[tool.poetry]
-name = "flux"
-version = "0.1.0"
-description = ""
-authors = ["kremenevskiy"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-diffusers = "0.30.2"
-opencv-python = "^4.10.0.84"
-uvicorn = "^0.32.0"
-fastapi = "^0.115.5"
-torch = "^2.5.1"
-huggingface-hub = "^0.26.2"
-transformers = "^4.46.2"
-sentencepiece = "^0.2.0"
-accelerate = "^1.1.1"
-python-multipart = "^0.0.17"
-protobuf = "^5.28.3"
-jupyter = "^1.1.1"
-lab = "^8.3"
-
+[tool.black]
+line-length = 100
+skip-string-normalization = true
+target-version = ['py310']
+include = '\.py?$'
+force-exclude = '''
+(
+  /(
+      \.eggs         
+    | \.git          
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | \venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
 
 [tool.ruff]
 line-length = 100
@@ -55,18 +54,11 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.7.4"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-
-
 [tool.ruff.lint]
 
 select = ["ALL"]
+
+
 ignore = [
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -82,6 +74,7 @@ ignore = [
     "ANN202", # Missing return type annotation for private function
     "ANN204", # Missing return type annotation for special method `__init__`
     
+
     "COM812", # Trailing comma missing
 
     "TRY003", # Avoid specifying long messages outside the exception class
@@ -112,12 +105,22 @@ ignore = [
     "Q001", # Double quote multiline found but single quotes preferred
 
     "TD003", # Missing issue link on the line following this
+    "TD002", # Missing author in TODO
 
     "FIX002", # Line contains TODO, consider resolving the issue
     
     "PLR0913", # Too many arguments in function definition (6 > 5)
 
-    # "Q000",
+    "FBT001", # Boolean arguments in functions
+    "FBT002", # Boolean arguments in functions
+    "PTH123", # `open()` should be replaced by `Path.open()`
+
+    "TRY002", # Create you own exception
+
+
+    "EXE002", # The file is executable but no shebang is present
+    "PLR2004", # Magic value used in comparison, consider replacing `3` with a constant   
+
    
 ]
 
@@ -130,4 +133,3 @@ multiline-quotes = "single"
 ignore_missing_imports = true
 disallow_untyped_defs = false
 # check_untyped_defs = false  # Disable checking of untyped function bodies
-

@@ -1,4 +1,4 @@
-diffusers==0.30.2
+git+https://github.com/huggingface/diffusers
 opencv-python
 uvicorn
 fastapi
@@ -15,3 +15,7 @@ jupyterlab
 gradio
 gradio_imageslider
 peft
+loguru
+matplotlib
+python-dotenv
+ruff

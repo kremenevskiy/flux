@@ -7,6 +7,7 @@ from typing import Any, TypeAlias
 import openai
 from loguru import logger
 from openai import InternalServerError
+from openai.types.chat import ChatCompletion
 
 from lora_train import config, gpt_prompts
 
@@ -28,33 +29,56 @@ class InvalidGenerationError(Exception):
 class GptApi:
     def __init__(self, model_name: str | None = None):
         self.model_name = model_name if model_name else config.GPTConf.model_name
-        self.client = openai.OpenAI(
+        self.client = openai.AsyncOpenAI(
             api_key=os.environ['OPENAI_PROXY_KEY'],
             base_url='https://api.proxyapi.ru/openai/v1',
         )
 
-    def _ask_gpt_custom(self, user_prompt: str, system_prompt: str) -> ChatCompletionResponse:
-        return self.client.chat.completions.create(
+    async def _create_chat_completion(
+        self,
+        system_prompt: str,
+        user_messages: list[dict],
+        max_tokens: int = 1024,
+        response_format: dict | None = None,
+    ) -> ChatCompletion:
+        messages = [{"role": "system", "content": system_prompt}] + user_messages
+        return await self.client.chat.completions.create(
             model=self.model_name,
-            response_format={'type': 'json_object'},
-            messages=[
-                {'role': 'system', 'content': system_prompt},
-                {
-                    'role': 'user',
-                    'content': f'{user_prompt}',
-                },
-            ],
-            max_tokens=1024,
+            messages=messages,
+            max_tokens=max_tokens,
+            **({"response_format": response_format} if response_format else {}),
         )
-
-    def _get_json_from_gpt(self, chat_completion: Any) -> dict:
+    
+    async def _ask_gpt(
+        self, user_prompt: str, system_prompt: str
+    ) -> ChatCompletion:
+        user_messages = [{"role": "user", "content": user_prompt}]
+        return await self._create_chat_completion(
+            system_prompt=system_prompt,
+            user_messages=user_messages,
+            response_format={"type": "json_object"},
+        )
+       
+    def _get_json_from_gpt(self, chat_completion: ChatCompletion) -> dict:
         finish_reason = chat_completion.choices[0].finish_reason
-        if finish_reason != 'stop':
-            raise MaxTokenLimitExceededError(
-                'Max tokens limit reached. Please try again with a shorter prompt.'
-            )
         openai_resp = chat_completion.choices[0].message.content
-        return json.loads(openai_resp)
+        if finish_reason != "stop":
+            raise MaxTokenLimitExceededError(
+                f"Max tokens limit reached. Please try again with a shorter prompt. Prompt: {openai_resp}"
+            )
+
+        return parse_json_from_gpt(response_str=openai_resp)
+    
+
+    async def ask_gpt(
+        self, user_input: str, system_prompt: str,
+    ) -> str:
+        chat_completion = await self._ask_gpt(
+            user_prompt=user_input,
+            system_prompt=system_prompt,
+        )
+        return self._get_json_from_gpt(chat_completion=chat_completion)
+    
 
     def _encode_image_to_base64(self, image_path: str) -> str:
         """Encode an image file to base64 format."""
@@ -119,3 +143,20 @@ class GptApi:
         raise RuntimeError(
             f'Failed to get image description after {config.GPTConf.retries} retries.'
         )
+
+
+def parse_json_from_gpt(response_str: str) -> dict:
+    response_str = response_str.strip()
+    try:
+        return json.loads(response_str)
+    except json.JSONDecodeError:
+        # Check for double curly braces: {{ ... }}
+        if response_str.startswith("{{") and response_str.endswith("}}"):
+            fixed_response = response_str[1:-1]
+            try:
+                return json.loads(fixed_response)
+            except json.JSONDecodeError as e2:
+                logger.error("Failed to parse GPT response as JSON:")
+                logger.error(f"Bad Response: {fixed_response}")
+                logger.error(f"Exception: {e2}")
+                raise ValueError("Invalid JSON from GPT response") from e2
