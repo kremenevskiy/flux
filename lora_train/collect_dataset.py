@@ -16,17 +16,17 @@ class DatasetProcessor:
     def process_dataset(self) -> None:
         self.generate_descriptions_for_local_photos()
 
-    def generate_photo_description(self, photo_path: str) -> str:
+    async def generate_photo_description(self, photo_path: str) -> str:
         if self.put_only_trigger_word:
             return self.trigger_word
-        image_description = gpt_api.GptApi().get_image_description_untill_success(
+        image_description = await gpt_api.GptApi().get_image_description_untill_success(
             image_path=photo_path
         )
         if self.trigger_word:
             image_description = f'{self.trigger_word}, {image_description}'
         return image_description
 
-    def generate_descriptions_for_local_photos(self, photos_dir: str, output_dir: str) -> None:
+    async def generate_descriptions_for_local_photos(self, photos_dir: str, output_dir: str) -> None:
         photos_dir_pth = Path(photos_dir)
         output_dir_pth = Path(output_dir)
         output_dir_pth.mkdir(parents=True, exist_ok=True)
@@ -47,7 +47,7 @@ class DatasetProcessor:
                 if text_save_path.exists():
                     logger.info(f'Description already exists: {text_save_path}')
                     continue
-                image_description = self.generate_photo_description(photo_path=str(photo_path))
+                image_description = await self.generate_photo_description(photo_path=str(photo_path))
 
                 # Save description in a text file
 
@@ -63,9 +63,13 @@ class DatasetProcessor:
 
                 logger.info(f'Processed: {photo_path.name} | Description saved: {text_save_path}')
 
+import asyncio
+
+async def main():
+    ds_processor = DatasetProcessor(trigger_word='pic_a, luxurious style, gold, high importance, ultra close up')
+    ds_path = '/root/data/PicA_New'
+    output_path = '/root/data/pic_a/'
+    await ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)
 
 if __name__ == '__main__':
-    ds_processor = DatasetProcessor(trigger_word='pic_a, luxurious style, gold, high importance, ultra close up', put_only_trigger_word=False)
-    ds_path = '/root/imgs_ds/pic_a'
-    output_path = '/root/data/pic_a_2/'
-    ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)
+    asyncio.run(main())

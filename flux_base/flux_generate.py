@@ -43,13 +43,9 @@ def get_model_pipe():
     return pipe, good_vae
 
 
-def get_model_pipe_with_lora(lora_path: str, adapter_weights: float=0.9):
+def get_model_pipe_with_lora():
     model_id = 'black-forest-labs/FLUX.1-dev'
     pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')    
-    pipeline.load_lora_weights(lora_path, adapter_name="lora_adapter")
-    style_lora_path = 'lora_models/lora_style.safetensors'
-    pipeline.load_lora_weights(style_lora_path, adapter_name="style")
-    pipeline.set_adapters(["style", "lora_adapter"], adapter_weights=[0.8, adapter_weights])
     return pipeline
 
 
@@ -104,9 +100,7 @@ def get_lora_path(tier: str | None = None) -> str:
         return 'lora_models/lora_pic_b.safetensors'
     elif tier == 'pic_3':
         return 'lora_models/lora_pic_c.safetensors'
-    elif tier == 'pic_4':
-        return 'lora_models/lora_pic_d.safetensors'
-    elif tier == 'pic_5':
+    elif tier == 'pic_4' or tier == 'pic_5':
         return 'lora_models/lora_pic_e.safetensors'
     raise ValueError(f'Unknown tier: {tier}')
 
@@ -131,8 +125,20 @@ def infer_with_tier(
         raise ValueError('Model manager is required')
     
 
+    
+
+
+    pipe = model_manager.get_model('flux_generate_with_lora')
+
     lora_path = get_lora_path(tier)
-    pipe = model_manager.get_model('flux_generate_with_lora', lora_path=lora_path, adapter_weights=0.9)
+    print('loading loras')
+
+    pipe.unload_lora_weights()
+    pipe.load_lora_weights(lora_path, adapter_name="lora_adapter")
+    style_lora_path = 'lora_models/lora_style.safetensors'
+    pipe.load_lora_weights(style_lora_path, adapter_name="style")
+    pipe.set_adapters(["style", "lora_adapter"], adapter_weights=[1.0, 1.0])
+
     meta = {
         'seed': seed,
         'guidance_scale': guidance_scale,
@@ -145,8 +151,8 @@ def infer_with_tier(
         prompt=prompt,
         height=height,
         width=width,
-        num_inference_steps=num_inference_steps,
-        guidance_scale=guidance_scale,
+        num_inference_steps=20,
+        guidance_scale=3.5,
         generator=generator,
     ).images[0]
 

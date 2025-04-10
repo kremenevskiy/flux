@@ -1,11 +1,11 @@
 config:
-  name: trained_model_a
+  name: lora_pia_a
   process:
   - datasets:
     - cache_latents_to_disk: true
       caption_dropout_rate: 0.05
       caption_ext: txt
-      folder_path: data/pic_a_2
+      folder_path: data/pic_a
       resolution:
       - 512
       - 768
@@ -17,8 +17,8 @@ config:
       name_or_path: black-forest-labs/FLUX.1-dev
       quantize: false
     network:
-      linear: 64
-      linear_alpha: 64
+      linear: 32
+      linear_alpha: 32
       type: lora
     sample:
       guidance_scale: 4
@@ -58,11 +58,11 @@ config:
         use_ema: true
       gradient_accumulation_steps: 1
       gradient_checkpointing: true
-      lr: 5e-5
+      lr: 1e-4
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true
-      steps: 32000
+      steps: 5000
       train_text_encoder: false
       train_unet: true
     training_folder: output

@@ -22,7 +22,7 @@ class ModelManager:
         if model_name == 'flux_generate':
             self.model = self.load_flux_generate_model()
         elif model_name == 'flux_generate_with_lora':
-            self.model = self.load_flux_with_lora(kwargs['lora_path'], kwargs['adapter_weights'])
+            self.model = self.load_flux_with_lora()
         elif model_name == 'flux_inpaint':
             self.model = self.load_flux_inpaint_model()
         elif model_name == 'flux_canny':
@@ -84,8 +84,8 @@ class ModelManager:
         return pipe
 
 
-    def load_flux_with_lora(self, lora_path: str, adapter_weights: float=0.9):
+    def load_flux_with_lora(self):
         from flux_base.flux_generate import get_model_pipe_with_lora
 
-        pipe = get_model_pipe_with_lora(lora_path, adapter_weights)
+        pipe = get_model_pipe_with_lora()
         return pipe

@@ -85,11 +85,8 @@ class GptApi:
         with open(image_path, 'rb') as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def get_image_description(self, image_path: str) -> str:
-        # Encode the image
+    async def get_image_description(self, image_path: str) -> str:
         base64_image = self._encode_image_to_base64(image_path)
-
-        # Prepare system and user messages
         user_message = {
             'role': 'user',
             'content': [
@@ -102,7 +99,7 @@ class GptApi:
         }
 
         # Send the request to GPT
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model='gpt-4o',  # GPT-4 Vision model
             messages=[
                 {
@@ -113,8 +110,6 @@ class GptApi:
             ],
             max_tokens=1024,
         )
-
-        # Parse the response
         return response.choices[0].message.content
 
     def get_image_description_untill_success(self, image_path: str) -> str:
