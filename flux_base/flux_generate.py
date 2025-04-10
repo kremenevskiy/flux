@@ -45,9 +45,11 @@ def get_model_pipe():
 
 def get_model_pipe_with_lora(lora_path: str, adapter_weights: float=0.9):
     model_id = 'black-forest-labs/FLUX.1-dev'
-    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
+    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')    
     pipeline.load_lora_weights(lora_path, adapter_name="lora_adapter")
-    pipeline.set_adapters(["lora_adapter"], adapter_weights=[adapter_weights])
+    style_lora_path = 'lora_models/lora_style.safetensors'
+    pipeline.load_lora_weights(style_lora_path, adapter_name="style")
+    pipeline.set_adapters(["style", "lora_adapter"], adapter_weights=[0.8, adapter_weights])
     return pipeline
 
 
