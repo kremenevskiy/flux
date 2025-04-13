@@ -1,5 +1,5 @@
 config:
-  name: lora_pia_a
+  name: lora_pia_a_rank_32_lr1_5
   process:
   - datasets:
     - cache_latents_to_disk: true
@@ -58,7 +58,7 @@ config:
         use_ema: true
       gradient_accumulation_steps: 1
       gradient_checkpointing: true
-      lr: 1e-4
+      lr: 1e-5
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true

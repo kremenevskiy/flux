@@ -1,13 +1,21 @@
+import os
 import subprocess
 
 # List of commands to run sequentially
-commands = [
-    'python ai-toolkit/run.py ai-toolkit/config/examples/styles_a.yml',
-    'python ai-toolkit/run.py ai-toolkit/config/examples/styles_b.yml',
-    'python ai-toolkit/run.py ai-toolkit/config/examples/styles_c.yml',
-    'python ai-toolkit/run.py ai-toolkit/config/examples/styles_d.yml',
-    'python ai-toolkit/run.py ai-toolkit/config/examples/styles_e.yml',
+
+
+config_files = [
+    'flux/lora_train/lora_configs/styles_latest_d.yml',
+    'flux/lora_train/lora_configs/styles_latest_e.yml',
 ]
+
+for config_file in config_files:
+    if not os.path.exists(config_file):
+        print(f'Config file {config_file} does not exist')
+        raise Exception(f'Config file {config_file} does not exist')
+
+commands = ['python ai-toolkit/run.py ' + config_file for config_file in config_files]
+
 
 # Run each command one by one
 for cmd in commands:

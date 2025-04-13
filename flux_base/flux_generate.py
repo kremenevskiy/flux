@@ -45,7 +45,7 @@ def get_model_pipe():
 
 def get_model_pipe_with_lora():
     model_id = 'black-forest-labs/FLUX.1-dev'
-    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')    
+    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
     return pipeline
 
 
@@ -86,11 +86,9 @@ def infer(
         good_vae=good_vae,
     ):
         img, seed = img, seed
-    
+
     torch.cuda.empty_cache()
     return img
-
-
 
 
 def get_lora_path(tier: str | None = None) -> str:
@@ -103,6 +101,20 @@ def get_lora_path(tier: str | None = None) -> str:
     elif tier == 'pic_4' or tier == 'pic_5':
         return 'lora_models/lora_pic_e.safetensors'
     raise ValueError(f'Unknown tier: {tier}')
+
+
+def get_trigger_word(tier: str) -> str:
+    trigger_words = {
+        'pic_1': 'pica style, luxurious style, gold, high importance, warm tones',
+        'pic_2': 'picb style, large size of object, warm tones, high importance of icon, slot icon, icon, Large',
+        'pic_3': 'picс style, medium size of object, violet tones, medium importance of icon, slot icon, icon, medium',
+        'pic_4': 'picd style, green tones, low importance of icon, slot icon, icon, small',
+        'pic_5': 'pice style, blue tones, low importance of icon, slot icon, icon, small',
+    }
+    if tier not in trigger_words:
+        raise ValueError(f'Unknown tier: {tier}')
+
+    return trigger_words[tier]
 
 
 def infer_with_tier(
@@ -123,10 +135,6 @@ def infer_with_tier(
     # Get the model from the model manager
     if model_manager is None:
         raise ValueError('Model manager is required')
-    
-
-    
-
 
     pipe = model_manager.get_model('flux_generate_with_lora')
 
@@ -134,10 +142,10 @@ def infer_with_tier(
     print('loading loras')
 
     pipe.unload_lora_weights()
-    pipe.load_lora_weights(lora_path, adapter_name="lora_adapter")
+    pipe.load_lora_weights(lora_path, adapter_name='lora_adapter')
     style_lora_path = 'lora_models/lora_style.safetensors'
-    pipe.load_lora_weights(style_lora_path, adapter_name="style")
-    pipe.set_adapters(["style", "lora_adapter"], adapter_weights=[1.0, 1.0])
+    pipe.load_lora_weights(style_lora_path, adapter_name='style')
+    pipe.set_adapters(['style', 'lora_adapter'], adapter_weights=[1.0, 1.0])
 
     meta = {
         'seed': seed,
@@ -146,6 +154,8 @@ def infer_with_tier(
         'lora_path': lora_path,
     }
     print('params: ', meta)
+
+    prompt = f'{get_trigger_word(tier)}, {prompt}'
 
     img = pipe(
         prompt=prompt,
@@ -156,6 +166,5 @@ def infer_with_tier(
         generator=generator,
     ).images[0]
 
-    
     torch.cuda.empty_cache()
     return img

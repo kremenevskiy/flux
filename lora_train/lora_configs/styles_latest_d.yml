@@ -1,11 +1,11 @@
 config:
-  name: lora_pia_a
+  name: lora_pia_d_rank_8_lr_1e_4
   process:
   - datasets:
     - cache_latents_to_disk: true
       caption_dropout_rate: 0.05
       caption_ext: txt
-      folder_path: data/pic_a
+      folder_path: data/pic_d
       resolution:
       - 512
       - 768
@@ -17,8 +17,8 @@ config:
       name_or_path: black-forest-labs/FLUX.1-dev
       quantize: false
     network:
-      linear: 32
-      linear_alpha: 32
+      linear: 8
+      linear_alpha: 8
       type: lora
     sample:
       guidance_scale: 4
@@ -62,11 +62,11 @@ config:
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true
-      steps: 5000
+      steps: 10000
       train_text_encoder: false
       train_unet: true
     training_folder: output
-    trigger_word: pic_a, luxurious style, gold, high importance, ultra close up
+    trigger_word: picd style, green tones, low importance of icon, slot icon, icon, small
     type: sd_trainer
 job: extension
 meta:

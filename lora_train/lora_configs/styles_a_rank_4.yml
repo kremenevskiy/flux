@@ -1,5 +1,5 @@
 config:
-  name: lora_pia_a
+  name: lora_pia_a_rank_4
   process:
   - datasets:
     - cache_latents_to_disk: true
@@ -17,8 +17,8 @@ config:
       name_or_path: black-forest-labs/FLUX.1-dev
       quantize: false
     network:
-      linear: 32
-      linear_alpha: 32
+      linear: 4
+      linear_alpha: 4
       type: lora
     sample:
       guidance_scale: 4

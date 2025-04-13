@@ -26,7 +26,9 @@ class DatasetProcessor:
             image_description = f'{self.trigger_word}, {image_description}'
         return image_description
 
-    async def generate_descriptions_for_local_photos(self, photos_dir: str, output_dir: str) -> None:
+    async def generate_descriptions_for_local_photos(
+        self, photos_dir: str, output_dir: str
+    ) -> None:
         photos_dir_pth = Path(photos_dir)
         output_dir_pth = Path(output_dir)
         output_dir_pth.mkdir(parents=True, exist_ok=True)
@@ -47,10 +49,11 @@ class DatasetProcessor:
                 if text_save_path.exists():
                     logger.info(f'Description already exists: {text_save_path}')
                     continue
-                image_description = await self.generate_photo_description(photo_path=str(photo_path))
+                image_description = await self.generate_photo_description(
+                    photo_path=str(photo_path)
+                )
 
                 # Save description in a text file
-
                 with text_save_path.open('w', encoding='utf-8') as text_file:
                     text_file.write(image_description)
 
@@ -63,13 +66,20 @@ class DatasetProcessor:
 
                 logger.info(f'Processed: {photo_path.name} | Description saved: {text_save_path}')
 
+
 import asyncio
 
+
 async def main():
-    ds_processor = DatasetProcessor(trigger_word='pic_a, luxurious style, gold, high importance, ultra close up')
-    ds_path = '/root/data/PicA_New'
-    output_path = '/root/data/pic_a/'
-    await ds_processor.generate_descriptions_for_local_photos(photos_dir=ds_path, output_dir=output_path)
+    ds_processor = DatasetProcessor(
+        trigger_word='pice style, blue tones, low importance of icon, slot icon, icon, small'
+    )
+    ds_path = '/root/data/PicE_New'
+    output_path = '/root/data/pic_e/'
+    await ds_processor.generate_descriptions_for_local_photos(
+        photos_dir=ds_path, output_dir=output_path
+    )
+
 
 if __name__ == '__main__':
     asyncio.run(main())
