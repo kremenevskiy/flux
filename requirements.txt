@@ -1,5 +1,5 @@
-git+https://github.com/huggingface/diffusers
-# diffusers==0.30.2 for ComfyUI
+# git+https://github.com/huggingface/diffusers
+diffusers==0.30.2 # for ComfyUI
 opencv-python
 uvicorn
 fastapi

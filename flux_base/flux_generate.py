@@ -105,11 +105,11 @@ def get_lora_path(tier: str | None = None) -> str:
 
 def get_trigger_word(tier: str) -> str:
     trigger_words = {
-        'pic_1': 'pica style, luxurious style, gold, high importance, warm tones',
-        'pic_2': 'picb style, large size of object, warm tones, high importance of icon, slot icon, icon, Large',
-        'pic_3': 'picс style, medium size of object, violet tones, medium importance of icon, slot icon, icon, medium',
-        'pic_4': 'picd style, green tones, low importance of icon, slot icon, icon, small',
-        'pic_5': 'pice style, blue tones, low importance of icon, slot icon, icon, small',
+        'pic_1': 'pic_a, luxurious style, gold, high importance, ultra close up',
+        'pic_2': 'picb style, large size of object, warm tones, high importance of icon, slot, Large',
+        'pic_3': 'picс style, medium size of object, violet tones, medium importance of icon, slot, medium',
+        'pic_4': 'picd style, green tones, low importance of icon, slot, icon, small',
+        'pic_5': 'pice style, blue tones, low importance of icon, slot, icon, small',
     }
     if tier not in trigger_words:
         raise ValueError(f'Unknown tier: {tier}')
@@ -145,7 +145,7 @@ def infer_with_tier(
     pipe.load_lora_weights(lora_path, adapter_name='lora_adapter')
     style_lora_path = 'lora_models/lora_style.safetensors'
     pipe.load_lora_weights(style_lora_path, adapter_name='style')
-    pipe.set_adapters(['style', 'lora_adapter'], adapter_weights=[1.0, 1.0])
+    pipe.set_adapters(['style', 'lora_adapter'], adapter_weights=[0.8, 1.0])
 
     meta = {
         'seed': seed,
@@ -156,12 +156,14 @@ def infer_with_tier(
     print('params: ', meta)
 
     prompt = f'{get_trigger_word(tier)}, {prompt}'
-
+    print('prompt: ', prompt)
+    print(f'width: {width}, height: {height}')
+    print(f'seed: {seed}')
     img = pipe(
         prompt=prompt,
         height=height,
         width=width,
-        num_inference_steps=20,
+        num_inference_steps=30,
         guidance_scale=3.5,
         generator=generator,
     ).images[0]

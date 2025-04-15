@@ -1,11 +1,11 @@
 config:
-  name: lora_pia_a
+  name: lora_pic_b_rank_32_lr_1e_4
   process:
   - datasets:
     - cache_latents_to_disk: true
       caption_dropout_rate: 0.05
       caption_ext: txt
-      folder_path: data/pic_a
+      folder_path: data/pic_b
       resolution:
       - 512
       - 768
@@ -46,7 +46,7 @@ config:
       width: 1024
     save:
       dtype: float16
-      max_step_saves_to_keep: 200
+      max_step_saves_to_keep: 1000
       push_to_hub: false
       save_every: 250
     train:
@@ -62,11 +62,11 @@ config:
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true
-      steps: 15000
+      steps: 10000
       train_text_encoder: false
       train_unet: true
     training_folder: output
-    trigger_word: pic_a, luxurious style, gold, high importance, ultra close up
+    trigger_word: picb style, large size of object, warm tones, high importance of icon, Large
     type: sd_trainer
 job: extension
 meta:

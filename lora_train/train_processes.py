@@ -5,8 +5,9 @@ import subprocess
 
 
 config_files = [
-    'flux/lora_train/lora_configs/styles_latest_d.yml',
-    'flux/lora_train/lora_configs/styles_latest_e.yml',
+    # 'flux/lora_train/lora_configs/styles_latest_d.yml',
+    'flux/lora_train/lora_configs/styles_latest_b.yml',
+    'flux/lora_train/lora_configs/styles_latest_c.yml',
 ]
 
 for config_file in config_files:

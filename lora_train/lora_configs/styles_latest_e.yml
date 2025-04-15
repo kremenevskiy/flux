@@ -46,7 +46,7 @@ config:
       width: 1024
     save:
       dtype: float16
-      max_step_saves_to_keep: 30
+      max_step_saves_to_keep: 1000
       push_to_hub: false
       save_every: 250
     train:

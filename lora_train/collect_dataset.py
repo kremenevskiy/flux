@@ -72,10 +72,10 @@ import asyncio
 
 async def main():
     ds_processor = DatasetProcessor(
-        trigger_word='pice style, blue tones, low importance of icon, slot icon, icon, small'
+        trigger_word='picс style, medium size of object, violet tones, medium importance of icon, medium'
     )
-    ds_path = '/root/data/PicE_New'
-    output_path = '/root/data/pic_e/'
+    ds_path = '/root/data/PicC_New'
+    output_path = '/root/data/pic_c/'
     await ds_processor.generate_descriptions_for_local_photos(
         photos_dir=ds_path, output_dir=output_path
     )
