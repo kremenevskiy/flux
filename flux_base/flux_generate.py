@@ -1,27 +1,19 @@
 import random
 
 import numpy as np
-
-# import spaces
 import torch
 from diffusers import (
     AutoencoderKL,
     AutoencoderTiny,
     DiffusionPipeline,
-    FlowMatchEulerDiscreteScheduler,
 )
 from PIL import Image
-from transformers import CLIPTextModel, CLIPTokenizer, T5EncoderModel, T5TokenizerFast
 
 import model_manager
-from flux_base.live_preview_helpers import (
-    calculate_shift,
-    flux_pipe_call_that_returns_an_iterable_of_images,
-    retrieve_timesteps,
-)
+from flux_base.live_preview_helpers import flux_pipe_call_that_returns_an_iterable_of_images
 
 
-def get_model_pipe():
+def get_model_pipe() -> tuple[DiffusionPipeline, AutoencoderKL]:
     dtype = torch.float16
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -34,46 +26,31 @@ def get_model_pipe():
     ).to(device)
     torch.cuda.empty_cache()
 
-    MAX_SEED = np.iinfo(np.int32).max
-    MAX_IMAGE_SIZE = 2048
-
     pipe.flux_pipe_call_that_returns_an_iterable_of_images = (
         flux_pipe_call_that_returns_an_iterable_of_images.__get__(pipe)
     )
     return pipe, good_vae
 
 
-def get_model_pipe_with_lora():
+def get_model_pipe_with_lora() -> DiffusionPipeline:
     model_id = 'black-forest-labs/FLUX.1-dev'
-    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
-    return pipeline
+    return DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.bfloat16).to('cuda')
 
 
-# @spaces.GPU(duration=75)
 def infer(
     prompt: str,
     model_manager: model_manager.ModelManager,
     seed: int = 42,
-    randomize_seed: bool = True,
     width: int = 1024,
     height: int = 1024,
     guidance_scale: float = 3.5,
     num_inference_steps: int = 28,
 ) -> Image.Image:
-    if randomize_seed and seed == 0:
+    if seed == 0:
         seed = random.randint(0, 10000)
     generator = torch.Generator().manual_seed(seed)
 
-    # Get the model from the model manager
-    if model_manager is None:
-        raise ValueError('Model manager is required')
     pipe, good_vae = model_manager.get_model('flux_generate')
-    meta = {
-        'seed': seed,
-        'guidance_scale': guidance_scale,
-        'num_inference_steps': num_inference_steps,
-    }
-    print('params: ', meta)
 
     for img in pipe.flux_pipe_call_that_returns_an_iterable_of_images(
         prompt=prompt,
@@ -92,79 +69,92 @@ def infer(
 
 
 def get_lora_path(tier: str | None = None) -> str:
-    if tier == 'pic_1':
-        return 'lora_models/lora_pic_a.safetensors'
-    elif tier == 'pic_2':
-        return 'lora_models/lora_pic_b.safetensors'
-    elif tier == 'pic_3':
-        return 'lora_models/lora_pic_c.safetensors'
-    elif tier == 'pic_4' or tier == 'pic_5':
-        return 'lora_models/lora_pic_e.safetensors'
-    raise ValueError(f'Unknown tier: {tier}')
+    lora_paths = {
+        'pic_1': 'lora_models/lora_pic_a.safetensors',
+        'pic_2': 'lora_models/lora_pic_b.safetensors',
+        'pic_3': 'lora_models/lora_pic_c.safetensors',
+        'pic_4': 'lora_models/lora_pic_d.safetensors',
+        'pic_5': 'lora_models/lora_pic_e.safetensors',
+    }
+
+    if tier not in lora_paths:
+        raise ValueError(f'Unknown tier: {tier}')
+
+    return lora_paths[tier]
 
 
-def get_trigger_word(tier: str) -> str:
+def get_trigger_word(tier: str, include_style: bool = False) -> str:
     trigger_words = {
         'pic_1': 'pic_a, luxurious style, gold, high importance, ultra close up',
-        'pic_2': 'picb style, large size of object, warm tones, high importance of icon, slot, Large',
-        'pic_3': 'picс style, medium size of object, violet tones, medium importance of icon, slot, medium',
-        'pic_4': 'picd style, green tones, low importance of icon, slot, icon, small',
+        'pic_2': 'pic_b, large size of object, warm tones, high importance of icon, Large',
+        'pic_3': 'pic_c, medium size of object, violet tones, medium importance of icon, medium',
+        'pic_4': 'pic_d, green tones, slot, icon, small',
         'pic_5': 'pice style, blue tones, low importance of icon, slot, icon, small',
+        'style': 'bbartstylecomp',
     }
     if tier not in trigger_words:
         raise ValueError(f'Unknown tier: {tier}')
 
-    return trigger_words[tier]
+    trigger_word = trigger_words[tier]
+    if include_style:
+        trigger_word = f'{trigger_words["style"]}, {trigger_word}'
+    return trigger_word
+
+
+def load_lora_weights(
+    pipe: DiffusionPipeline,
+    tier: str,
+    character_lora_strength: float,
+    style_lora_strength: float,
+) -> str:
+    style_lora_path = 'lora_models/lora_style.safetensors'
+    character_lora_path = get_lora_path(tier)
+
+    pipe.unload_lora_weights()
+    pipe.load_lora_weights(character_lora_path, adapter_name='character_lora')
+    pipe.load_lora_weights(style_lora_path, adapter_name='style')
+    pipe.set_adapters(
+        ['style', 'character_lora'], adapter_weights=[style_lora_strength, character_lora_strength]
+    )
+
+    load_style_lora = style_lora_strength > 0.0
+    return get_trigger_word(tier, include_style=load_style_lora)
 
 
 def infer_with_tier(
     prompt: str,
     model_manager: model_manager.ModelManager,
     tier: str | None = None,
-    seed: int = 42,
-    randomize_seed: bool = True,
+    seed: int = 117,
     width: int = 1024,
     height: int = 1024,
     guidance_scale: float = 3.5,
     num_inference_steps: int = 28,
+    character_lora_strength: float = 1.0,
+    style_lora_strength: float = 0.0,
 ) -> Image.Image:
-    if randomize_seed and seed == 0:
+    if seed == 0:
         seed = random.randint(0, 10000)
     generator = torch.Generator().manual_seed(seed)
 
-    # Get the model from the model manager
-    if model_manager is None:
-        raise ValueError('Model manager is required')
-
     pipe = model_manager.get_model('flux_generate_with_lora')
+    trigger_word = load_lora_weights(
+        pipe,
+        tier=tier,
+        character_lora_strength=character_lora_strength,
+        style_lora_strength=style_lora_strength,
+    )
+    print(
+        f'tier: {tier}, trigger_word: {trigger_word}, character_lora_strength: {character_lora_strength}, style_lora_strength: {style_lora_strength}'
+    )
 
-    lora_path = get_lora_path(tier)
-    print('loading loras')
-
-    pipe.unload_lora_weights()
-    pipe.load_lora_weights(lora_path, adapter_name='lora_adapter')
-    style_lora_path = 'lora_models/lora_style.safetensors'
-    pipe.load_lora_weights(style_lora_path, adapter_name='style')
-    pipe.set_adapters(['style', 'lora_adapter'], adapter_weights=[0.8, 1.0])
-
-    meta = {
-        'seed': seed,
-        'guidance_scale': guidance_scale,
-        'num_inference_steps': num_inference_steps,
-        'lora_path': lora_path,
-    }
-    print('params: ', meta)
-
-    prompt = f'{get_trigger_word(tier)}, {prompt}'
-    print('prompt: ', prompt)
-    print(f'width: {width}, height: {height}')
-    print(f'seed: {seed}')
+    prompt = f'{trigger_word}, {prompt}'
     img = pipe(
         prompt=prompt,
         height=height,
         width=width,
-        num_inference_steps=30,
-        guidance_scale=3.5,
+        num_inference_steps=30,  # num_inference_steps
+        guidance_scale=3.5,  # guidance_scale
         generator=generator,
     ).images[0]
 

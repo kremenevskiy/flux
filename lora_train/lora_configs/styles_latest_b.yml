@@ -62,7 +62,7 @@ config:
       noise_scheduler: flowmatch
       optimizer: adamw8bit
       skip_first_sample: true
-      steps: 10000
+      steps: 6000
       train_text_encoder: false
       train_unet: true
     training_folder: output

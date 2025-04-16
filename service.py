@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import FileResponse
@@ -58,6 +57,8 @@ async def flux_generate_image_with_tier(
     seed: int = Form(0),
     width: int = Form(1024),
     height: int = Form(1024),
+    character_lora_strength: float = Form(1.0),
+    style_lora_strength: float = Form(0.0),
 ) -> FileResponse:
     img = flux_generate.infer_with_tier(
         prompt=prompt,
@@ -68,6 +69,8 @@ async def flux_generate_image_with_tier(
         seed=seed,
         guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
+        character_lora_strength=character_lora_strength,
+        style_lora_strength=style_lora_strength,
     )
     img_save_path = (
         Path(config.config.dirs.generation_dir) / f'{utils_service.get_hash_from_uuid()}.png'
@@ -239,7 +242,7 @@ async def animation_zoom_in(
 ) -> FileResponse:
     # Generate unique ID for this request
     unique_id = utils_service.get_hash_from_uuid()
-    
+
     # Create unique directory for this request
     request_dir = Path(config.config.dirs.animation_dir) / unique_id
     request_dir.mkdir(parents=True, exist_ok=True)
@@ -247,7 +250,6 @@ async def animation_zoom_in(
     # Set paths for input and output videos in the unique directory
     input_video_path = request_dir / 'base_video.mp4'
     output_video_path = request_dir / 'zoomed.mp4'
-
 
     # Save uploaded video
     with input_video_path.open('wb') as file:
@@ -258,12 +260,9 @@ async def animation_zoom_in(
 
     # Return the processed video
     return FileResponse(
-        path=str(output_video_path),
-        media_type='video/mp4',
-        filename=f'zoomed_{unique_id}.mp4'
+        path=str(output_video_path), media_type='video/mp4', filename=f'zoomed_{unique_id}.mp4'
     )
 
 
-
-if __name__ == '__main__':  
+if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=11234)
