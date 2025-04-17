@@ -81,11 +81,12 @@ def inference_with_lora(
     )
 
     prompt = f'{trigger_word}, {prompt}'
+    print(prompt)
     return pipe(
         prompt=prompt,
         height=1024,
         width=1024,
-        num_inference_steps=30,
+        num_inference_steps=1,
         guidance_scale=3.5,
         generator=generator,
     ).images[0]
@@ -114,7 +115,7 @@ class IconsTest:
 
     def generate_icons(self, prompts: list[str], save_dirpath: str) -> None:
         for pic_idx, prompt in enumerate(prompts, start=1):
-            seeds = [117]
+            seeds = [117, 228, 339, 440, 551]
             for seed in seeds:
                 image = inference_with_lora(
                     pipe=self.pipe, tier=f'pic_{pic_idx}', prompt=prompt, seed=seed
@@ -125,7 +126,8 @@ class IconsTest:
 
     def run_experiment(self) -> None:
         for theme in self.themes_list:
-            prompts = self.create_icons_prompts(theme)
+            prompts_config = self.create_icons_prompts(theme)
+            prompts = list(prompts_config['icon_prompts'].values())
             theme_name = theme.lower().replace(' ', '_')
             theme_path = self.experiment_path / theme_name
             theme_path.mkdir(parents=True, exist_ok=True)
@@ -146,7 +148,69 @@ def run_experiment(themes_list: list[str], experiment_name: str, model_name: str
 
 def main() -> None:
     exp_name = 'base'
-    themes_list = ['Anime', 'New Year']
+    themes_list = [
+        'Brawl Stars',
+        'Neon Anime Adventure',
+        'Elegant Origami Creations',
+        'Adult Night Passion',
+        'Mystic Mountain Peaks',
+        'Groovy Dance Party',
+        'Melodic Note Symphony',
+        'Crispy Potato Pancakes',
+        'Global Food Feast',
+        'Cute Kitten Paradise',
+        'Happy Puppy Park',
+        'Blooming Flower Garden',
+        'Haunted Ghost Mansion',
+        'Belarusian Mythic Legends',
+        'Champion Boxing Ring',
+        'Harry Potter',
+        'Hallo Kitty',
+        'Halloween Night',
+        'Micky Mouse',
+        'Paw Patrol',
+        'SpongeBob SquarePants',
+        'The Simpsons',
+        'The Witches',
+        'The Wizard of Oz',
+        'The Lord of the Rings',
+        'The Hobbit',
+        'The Chronicles of Narnia',
+        'Pirates of the Caribbean',
+        'Game of Thrones',
+        'BELARUS HATES TRUMP',
+        'Stock Market down because of Trump',
+        'Ancient Egyptian Treasures',
+        'Wild West Outlaws',
+        'Deep Sea Exploration',
+        'Tropical Paradise Resort',
+        'Futuristic Cyberpunk City',
+        'Medieval Fantasy Kingdom',
+        'Viking Warriors Voyage',
+        'Jurassic Dinosaur World',
+        'Magical Fairy Forest',
+        'Cosmic Space Adventure',
+        'Golden Chinese Dynasty',
+        'Post-Apocalyptic Wasteland',
+        'Steampunk Inventors',
+        'Mythical Greek Gods',
+        'Aztec Temple Mysteries',
+        'Enchanted Candy Land',
+        'Retro Arcade Games',
+        'Spicy Mexican Fiesta',
+        'Luxury Casino Lifestyle',
+        'Robot Uprising Revolution',
+        'Superhero Team Battle',
+        'Classic Horror Monsters',
+        'Samurai Honor Code',
+        'Underwater Mermaid Kingdom',
+        'Olympic Sports Champions',
+        'Exotic Jungle Safari',
+        'Frozen Arctic Expedition',
+        'Magic Circus Performers',
+        'Vintage Hollywood Stars',
+        'Swashbuckling Pirate Adventure',
+    ]
     model_name = 'gpt-4o-mini'
     run_experiment(themes_list, exp_name, model_name)
 
