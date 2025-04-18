@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch
 from diffusers import DiffusionPipeline
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from symbols_priority.icons_priority import gpt_api, icons_prompt
 
@@ -86,7 +86,7 @@ def inference_with_lora(
         prompt=prompt,
         height=1024,
         width=1024,
-        num_inference_steps=1,
+        num_inference_steps=30,
         guidance_scale=3.5,
         generator=generator,
     ).images[0]
@@ -125,6 +125,9 @@ class IconsTest:
                 image.save(save_path)
 
     def run_experiment(self) -> None:
+        if self.experiment_path.exists():
+            print('skipping run_experiment, experiment already exists')
+            return
         for theme in self.themes_list:
             prompts_config = self.create_icons_prompts(theme)
             prompts = list(prompts_config['icon_prompts'].values())
@@ -135,6 +138,77 @@ class IconsTest:
             self.save_prompts(prompts, save_meta_path)
             self.generate_icons(prompts, theme_path)
 
+    def make_summary(self) -> None:
+        summary_file_path = self.experiment_path / 'summary.png'
+        img_size = 256
+        padding = 10
+        text_height = 30  # Height allocated for theme text
+        cols = 5  # pic_1 to pic_5
+        rows = len(self.themes_list)
+
+        total_width = cols * img_size + (cols + 1) * padding
+        # Adjust height for images, padding, and text for each row
+        total_height = rows * (img_size + text_height) + (rows + 1) * padding
+
+        # Create a white background canvas
+        summary_image = Image.new('RGB', (total_width, total_height), color='white')
+        draw = ImageDraw.Draw(summary_image)
+
+        # Try to load a default font, fall back to a basic one if needed
+        try:
+            font = ImageFont.truetype('arial.ttf', 20)  # Try loading Arial font, size 20
+        except IOError:
+            print('Arial font not found. Using default PIL font.')
+            font = ImageFont.load_default()
+
+        placeholder_image = Image.new(
+            'RGB', (img_size, img_size), color=(200, 200, 200)
+        )  # Gray placeholder
+
+        y_offset = padding
+        for theme_idx, theme in enumerate(self.themes_list):
+            theme_name = theme  # Keep original theme name for display
+            theme_path_name = theme.lower().replace(' ', '_')  # Use sanitized name for path
+            theme_path = self.experiment_path / theme_path_name
+            x_offset = padding
+
+            # Paste images for the current row
+            for pic_idx in range(1, 6):
+                image_filename = '117.png'  # Using the first seed's image
+                image_path = theme_path / f'pic_{pic_idx}' / image_filename
+
+                if image_path.exists():
+                    try:
+                        img = Image.open(image_path).convert('RGB')
+                        img = img.resize((img_size, img_size), Image.Resampling.LANCZOS)
+                        summary_image.paste(img, (x_offset, y_offset))
+                    except Exception as e:
+                        print(f'Error processing image {image_path}: {e}')
+                        summary_image.paste(placeholder_image, (x_offset, y_offset))
+                else:
+                    # Paste placeholder if image not found
+                    summary_image.paste(placeholder_image, (x_offset, y_offset))
+
+                x_offset += img_size + padding
+
+            # Draw the theme text below the row of images
+            text_y_position = y_offset + img_size + (padding // 2)  # Position text below images
+            text_x_position = padding  # Align text to the left padding
+            draw.text((text_x_position, text_y_position), theme_name, fill='black', font=font)
+
+            # Update y_offset for the next row (including image height, text height, and padding)
+            y_offset += img_size + text_height + padding
+
+        try:
+            summary_image.save(summary_file_path)
+            print(f'Summary PNG generated at: {summary_file_path}')
+        except IOError as e:
+            print(f'Error saving summary PNG: {e}')
+
+    def run(self) -> None:
+        self.run_experiment()
+        self.make_summary()
+
     def _init_pipe(self) -> None:
         self.pipe = DiffusionPipeline.from_pretrained(
             'black-forest-labs/FLUX.1-dev', torch_dtype=torch.bfloat16
@@ -143,11 +217,11 @@ class IconsTest:
 
 def run_experiment(themes_list: list[str], experiment_name: str, model_name: str) -> None:
     icons_test = IconsTest(themes_list, model_name, experiment_name)
-    icons_test.run_experiment()
+    icons_test.run()
 
 
 def main() -> None:
-    exp_name = 'base'
+    exp_name = 'base with alive'
     themes_list = [
         'Brawl Stars',
         'Neon Anime Adventure',

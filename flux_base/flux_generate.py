@@ -89,7 +89,7 @@ def get_trigger_word(tier: str, include_style: bool = False) -> str:
         'pic_2': 'pic_b, large size of object, warm tones, high importance of icon, Large',
         'pic_3': 'pic_c, medium size of object, violet tones, medium importance of icon, medium',
         'pic_4': 'pic_d, green tones, slot, icon, small',
-        'pic_5': 'pice style, blue tones, low importance of icon, slot, icon, small',
+        'pic_5': 'pice style, blue tones, slot, icon, small',
         'style': 'bbartstylecomp',
     }
     if tier not in trigger_words:
