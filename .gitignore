@@ -13,3 +13,4 @@ experiments
 *safetensors
 *.mp4
 /lora_train/compare_loras
+/symbols_priority/icons_tests
