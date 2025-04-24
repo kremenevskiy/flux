@@ -104,8 +104,9 @@ class IconsTest:
     def create_icons_prompts(self, theme: str) -> list[str]:
         return gpt_api.GptApi().get_sorted_symbols(theme, self.model_name)
 
-    def save_prompts(self, prompts: list[str], save_path: str) -> None:
+    def save_prompts(self, prompts: list[str], icons_list: list[str], save_path: str) -> None:
         data = {
+            'icons_list': icons_list,
             'prompts': prompts,
             'model_name': self.model_name,
             'system_prompt': icons_prompt.ICONS_SYSTEM_PROMPT,
@@ -115,27 +116,40 @@ class IconsTest:
 
     def generate_icons(self, prompts: list[str], save_dirpath: str) -> None:
         for pic_idx, prompt in enumerate(prompts, start=1):
-            seeds = [117, 228, 339, 440, 551]
+            seeds = [117]
             for seed in seeds:
+                save_path = save_dirpath / f'pic_{pic_idx}' / f'{seed}.png'
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                if save_path.exists():
+                    print(f'skipping {save_path}, file already exists')
+                    continue
                 image = inference_with_lora(
                     pipe=self.pipe, tier=f'pic_{pic_idx}', prompt=prompt, seed=seed
                 )
-                save_path = save_dirpath / f'pic_{pic_idx}' / f'{seed}.png'
-                save_path.parent.mkdir(parents=True, exist_ok=True)
+
                 image.save(save_path)
 
     def run_experiment(self) -> None:
-        if self.experiment_path.exists():
-            print('skipping run_experiment, experiment already exists')
-            return
         for theme in self.themes_list:
-            prompts_config = self.create_icons_prompts(theme)
-            prompts = list(prompts_config['icon_prompts'].values())
+            print(f'running experiment for {theme}')
             theme_name = theme.lower().replace(' ', '_')
             theme_path = self.experiment_path / theme_name
-            theme_path.mkdir(parents=True, exist_ok=True)
             save_meta_path = theme_path / 'icons_meta.json'
-            self.save_prompts(prompts, save_meta_path)
+            if not save_meta_path.exists():
+                prompts_config = self.create_icons_prompts(theme)
+                prompts = list(prompts_config['icon_prompts'].values())
+                theme_path.mkdir(parents=True, exist_ok=True)
+                self.save_prompts(
+                    prompts=prompts,
+                    icons_list=prompts_config['slot_icons'],
+                    save_path=save_meta_path,
+                )
+            else:
+                with open(save_meta_path) as f:
+                    prompts_config = json.load(f)
+
+                prompts = prompts_config['prompts']
+
             self.generate_icons(prompts, theme_path)
 
     def make_summary(self) -> None:
@@ -167,8 +181,8 @@ class IconsTest:
 
         y_offset = padding
         for theme_idx, theme in enumerate(self.themes_list):
-            theme_name = theme  # Keep original theme name for display
-            theme_path_name = theme.lower().replace(' ', '_')  # Use sanitized name for path
+            theme_name = theme
+            theme_path_name = theme.lower().replace(' ', '_')
             theme_path = self.experiment_path / theme_path_name
             x_offset = padding
 
@@ -221,32 +235,32 @@ def run_experiment(themes_list: list[str], experiment_name: str, model_name: str
 
 
 def main() -> None:
-    exp_name = 'base with alive'
+    exp_name = 'gpt_4.1_with_alive_first'
     themes_list = [
-        'Brawl Stars',
-        'Neon Anime Adventure',
-        'Elegant Origami Creations',
-        'Adult Night Passion',
-        'Mystic Mountain Peaks',
-        'Groovy Dance Party',
-        'Melodic Note Symphony',
-        'Crispy Potato Pancakes',
-        'Global Food Feast',
-        'Cute Kitten Paradise',
-        'Happy Puppy Park',
-        'Blooming Flower Garden',
+        # 'Brawl Stars',
+        # 'Neon Anime Adventure',
+        # 'Elegant Origami Creations',
+        # 'Adult Night Passion',
+        # 'Mystic Mountain Peaks',
+        # 'Groovy Dance Party',
+        # 'Melodic Note Symphony',
+        # 'Crispy Potato Pancakes',
+        # 'Global Food Feast',
+        # 'Cute Kitten Paradise',
+        # 'Happy Puppy Park',
+        # 'Blooming Flower Garden',
         'Haunted Ghost Mansion',
         'Belarusian Mythic Legends',
-        'Champion Boxing Ring',
+        # 'Champion Boxing Ring',
         'Harry Potter',
-        'Hallo Kitty',
+        # 'Hallo Kitty',
         'Halloween Night',
-        'Micky Mouse',
-        'Paw Patrol',
-        'SpongeBob SquarePants',
-        'The Simpsons',
+        # 'Micky Mouse',
+        # 'Paw Patrol',
+        # 'SpongeBob SquarePants',
+        # 'The Simpsons',
         'The Witches',
-        'The Wizard of Oz',
+        # 'The Wizard of Oz',
         'The Lord of the Rings',
         'The Hobbit',
         'The Chronicles of Narnia',
@@ -285,7 +299,7 @@ def main() -> None:
         'Vintage Hollywood Stars',
         'Swashbuckling Pirate Adventure',
     ]
-    model_name = 'gpt-4o-mini'
+    model_name = 'gpt-4.1'
     run_experiment(themes_list, exp_name, model_name)
 
 
