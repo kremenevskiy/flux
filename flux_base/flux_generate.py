@@ -149,6 +149,7 @@ def infer_with_tier(
     )
 
     prompt = f'{trigger_word}, {prompt}'
+    print(f'result prompt: {prompt}')
     img = pipe(
         prompt=prompt,
         height=height,

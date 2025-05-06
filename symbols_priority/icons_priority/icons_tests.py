@@ -104,25 +104,28 @@ class IconsTest:
     def create_icons_prompts(self, theme: str) -> list[str]:
         return gpt_api.GptApi().get_sorted_symbols(theme, self.model_name)
 
-    def save_prompts(self, prompts: list[str], icons_list: list[str], save_path: str) -> None:
+    def save_prompts(self, prompts: list[str], icons_list: list[str],  style: str, save_path: str) -> None:
         data = {
             'icons_list': icons_list,
             'prompts': prompts,
+            'style': style,
             'model_name': self.model_name,
             'system_prompt': icons_prompt.ICONS_SYSTEM_PROMPT,
         }
         with open(save_path, 'w') as f:
             json.dump(data, f, indent=4)
 
-    def generate_icons(self, prompts: list[str], save_dirpath: str) -> None:
+    def generate_icons(self, prompts: list[str], save_dirpath: str, override = False, style: str | None = None) -> None:
         for pic_idx, prompt in enumerate(prompts, start=1):
             seeds = [117]
             for seed in seeds:
-                save_path = save_dirpath / f'pic_{pic_idx}' / f'{seed}.png'
+                save_path = Path(save_dirpath) / f'pic_{pic_idx}' / f'{seed}.png'
                 save_path.parent.mkdir(parents=True, exist_ok=True)
-                if save_path.exists():
+                if not override and save_path.exists():
                     print(f'skipping {save_path}, file already exists')
                     continue
+                if style:
+                    prompt = f'{prompt} in {style} style'
                 image = inference_with_lora(
                     pipe=self.pipe, tier=f'pic_{pic_idx}', prompt=prompt, seed=seed
                 )
@@ -137,11 +140,13 @@ class IconsTest:
             save_meta_path = theme_path / 'icons_meta.json'
             if not save_meta_path.exists():
                 prompts_config = self.create_icons_prompts(theme)
-                prompts = list(prompts_config['icon_prompts'].values())
+                prompts = prompts_config['icon_prompts']
+                style = prompts_config['style']
                 theme_path.mkdir(parents=True, exist_ok=True)
                 self.save_prompts(
                     prompts=prompts,
                     icons_list=prompts_config['slot_icons'],
+                    style=style,
                     save_path=save_meta_path,
                 )
             else:
@@ -150,7 +155,7 @@ class IconsTest:
 
                 prompts = prompts_config['prompts']
 
-            self.generate_icons(prompts, theme_path)
+            self.generate_icons(prompts, theme_path, style=style)
 
     def make_summary(self) -> None:
         summary_file_path = self.experiment_path / 'summary.png'
@@ -234,8 +239,26 @@ def run_experiment(themes_list: list[str], experiment_name: str, model_name: str
     icons_test.run()
 
 
+def test_generate_icons() -> None:
+    theme_path = 'test_theme'
+    icons_test = IconsTest([], model_name = 'gpt-4.1', experiment_name='test')
+    style = 'Vintage, cartoon, storybook, fairytale, Shrek'
+    prompts = [
+        "Luxurious full‑height illustration of Shrek, his vest completely covered in gold, and a crown of emeralds on his head",
+        "Powerful dragon rendered in blazing reds and molten oranges, wings unfurled amid swirling sparks and embers, scales gleaming with heat to convey fierce strength and passion.",
+        "Swashbuckling Puss in Boots poised mid‑leap, cloak swirling, lit by vibrant amethyst and deep purple highlights, sparkling magical motes surrounding him to evoke daring mystery and charm.",
+        "Playful Donkey beaming widely under a fresh emerald‑green glow, surrounded by sprouting clover leaves and subtle nature swirls, radiating lively humor and warmth.",
+        "Small brown gingerbread man with crisp icing details, outlined by a gentle minimal blue glow that adds calm contrast without conveying coldness, maintaining a playful and compact silhouette."
+    ]
+
+    icons_test.generate_icons(prompts, theme_path, override=False, style=style)
+    
+
+
 def main() -> None:
-    exp_name = 'gpt_4.1_with_alive_first'
+    # test_generate_icons()
+    # return
+    exp_name = 'style_add_fix_prompt_examples'
     themes_list = [
         # 'Brawl Stars',
         # 'Neon Anime Adventure',
@@ -249,55 +272,55 @@ def main() -> None:
         # 'Cute Kitten Paradise',
         # 'Happy Puppy Park',
         # 'Blooming Flower Garden',
-        'Haunted Ghost Mansion',
-        'Belarusian Mythic Legends',
+        # 'Haunted Ghost Mansion',
+        # 'Belarusian Mythic Legends',
         # 'Champion Boxing Ring',
-        'Harry Potter',
-        # 'Hallo Kitty',
+        # 'Harry Potter',
+        'Hello Kitty',
         'Halloween Night',
         # 'Micky Mouse',
         # 'Paw Patrol',
-        # 'SpongeBob SquarePants',
+        'SpongeBob SquarePants',
         # 'The Simpsons',
         'The Witches',
         # 'The Wizard of Oz',
-        'The Lord of the Rings',
-        'The Hobbit',
-        'The Chronicles of Narnia',
-        'Pirates of the Caribbean',
-        'Game of Thrones',
-        'BELARUS HATES TRUMP',
-        'Stock Market down because of Trump',
-        'Ancient Egyptian Treasures',
-        'Wild West Outlaws',
-        'Deep Sea Exploration',
-        'Tropical Paradise Resort',
-        'Futuristic Cyberpunk City',
-        'Medieval Fantasy Kingdom',
-        'Viking Warriors Voyage',
-        'Jurassic Dinosaur World',
-        'Magical Fairy Forest',
-        'Cosmic Space Adventure',
-        'Golden Chinese Dynasty',
-        'Post-Apocalyptic Wasteland',
-        'Steampunk Inventors',
-        'Mythical Greek Gods',
-        'Aztec Temple Mysteries',
-        'Enchanted Candy Land',
-        'Retro Arcade Games',
-        'Spicy Mexican Fiesta',
-        'Luxury Casino Lifestyle',
-        'Robot Uprising Revolution',
-        'Superhero Team Battle',
-        'Classic Horror Monsters',
-        'Samurai Honor Code',
-        'Underwater Mermaid Kingdom',
-        'Olympic Sports Champions',
-        'Exotic Jungle Safari',
-        'Frozen Arctic Expedition',
-        'Magic Circus Performers',
-        'Vintage Hollywood Stars',
-        'Swashbuckling Pirate Adventure',
+        # 'The Lord of the Rings',
+        # 'The Hobbit',
+        # 'The Chronicles of Narnia',
+        # 'Pirates of the Caribbean',
+        # 'Game of Thrones',
+        # 'BELARUS HATES TRUMP',
+        # 'Stock Market down because of Trump',
+        # 'Ancient Egyptian Treasures',
+        # 'Wild West Outlaws',
+        # 'Deep Sea Exploration',
+        # 'Tropical Paradise Resort',
+        # 'Futuristic Cyberpunk City',
+        # 'Medieval Fantasy Kingdom',
+        # 'Viking Warriors Voyage',
+        # 'Jurassic Dinosaur World',
+        # 'Magical Fairy Forest',
+        # 'Cosmic Space Adventure',
+        # 'Golden Chinese Dynasty',
+        # 'Post-Apocalyptic Wasteland',
+        # 'Steampunk Inventors',
+        # 'Mythical Greek Gods',
+        # 'Aztec Temple Mysteries',
+        # 'Enchanted Candy Land',
+        # 'Retro Arcade Games',
+        # 'Spicy Mexican Fiesta',
+        # 'Luxury Casino Lifestyle',
+        # 'Robot Uprising Revolution',
+        # 'Superhero Team Battle',
+        # 'Classic Horror Monsters',
+        # 'Samurai Honor Code',
+        # 'Underwater Mermaid Kingdom',
+        # 'Olympic Sports Champions',
+        # 'Exotic Jungle Safari',
+        # 'Frozen Arctic Expedition',
+        # 'Magic Circus Performers',
+        # 'Vintage Hollywood Stars',
+        # 'Swashbuckling Pirate Adventure',
     ]
     model_name = 'gpt-4.1'
     run_experiment(themes_list, exp_name, model_name)

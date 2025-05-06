@@ -238,14 +238,19 @@ def infer(
                 image=get_value_at_index(loadimage_16, 0),
             )
 
+            img_pt = get_value_at_index(cannyedgepreprocessor_15, 0)
+            img_pt = img_pt.squeeze(0)
+            img_pt = img_pt.permute(2, 0, 1)
+            torchvision.utils.save_image(img_pt, 'canny_edge.png')
+
             applyfluxcontrolnet_14 = applyfluxcontrolnet.prepare(
-                strength=0.7000000000000001,
+                strength=0.6000000000000001,
                 controlnet=get_value_at_index(loadfluxcontrolnet_13, 0),
                 image=get_value_at_index(cannyedgepreprocessor_15, 0),
             )
 
             xlabssampler_3 = xlabssampler.sampling(
-                noise_seed=49,
+                noise_seed=seed,
                 steps=num_inference_steps,
                 timestep_to_start_cfg=1,
                 true_gs=guidance_scale,
@@ -277,8 +282,6 @@ def infer(
             del cliptextencodeflux_5
             torch.cuda.empty_cache()
             return img_pt
-
-        
     return
 
 
