@@ -3,8 +3,12 @@ import sys
 import torch
 from datetime import datetime
 import shutil
-import argparse
 import cv2
+import numpy as np
+import torch
+import torchvision
+from PIL import Image
+import argparse
 
 # Add TrajectoryCrafter to Python path if not already there
 TRAJ_CRAFTER_PATH = '/root/TrajectoryCrafter'
@@ -145,8 +149,7 @@ def run_trajectory_crafter(
         crafter.infer_direct(opts)
     elif mode == 'bullet':
         crafter.infer_bullet(opts)
-        
-    return os.path.join(output_dir, 'gen_reversed.mp4')
+    return os.path.join(output_dir, 'gen.mp4')
 
 def run_trajectory_crafter_with_save(
     video_path: str,
@@ -161,26 +164,6 @@ def run_trajectory_crafter_with_save(
     mode: str = "gradual",  # gradual, direct, or bullet
     camera_move_name: str = 'ZOOM_IN'  # Optional name of camera move for filename
 ) -> str:
-    """
-    Run TrajectoryCrafter and save the output to a custom location.
-    
-    Args:
-        video_path: Path to input video
-        camera_move: Camera movement parameters (use CameraMove constants)
-        save_path: Custom path where to save the final video (optional)
-        stride: Frame sampling stride (1-3)
-        center_scale: Center scale factor (0.1-2.0)
-        sampling_steps: Number of diffusion steps (1-50)
-        random_seed: Random seed (0-2^31)
-        output_dir: Output directory (default: ./experiments/timestamp)
-        device: Device to run on (default: cuda:0)
-        mode: Camera mode (gradual, direct, or bullet)
-        camera_move_name: Name of camera move (e.g., "ZOOM_IN") for filename
-        
-    Returns:
-        Path to the final saved video file
-    """
-    # Run the original function
     temp_output_path = run_trajectory_crafter(
         video_path=video_path,
         camera_move=camera_move,
@@ -192,16 +175,74 @@ def run_trajectory_crafter_with_save(
         device=device,
         mode=mode
     )
+
+    reversed_output_path = create_reversed_video(temp_output_path)
     
     # If save_path is provided, move the file to the desired location
     if save_path:
         # Create the directory if it doesn't exist
         os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
         # Copy the file to the new location
-        shutil.copy2(temp_output_path, save_path)
+
+        shutil.copy2(reversed_output_path, save_path)
         return save_path
     
-    return temp_output_path
+    return reversed_output_path
+
+
+
+
+def save_video(data, images_path, folder=None, fps=8):
+    if isinstance(data, np.ndarray):
+        tensor_data = (torch.from_numpy(data) * 255).to(torch.uint8)
+    elif isinstance(data, torch.Tensor):
+        tensor_data = (data.detach().cpu() * 255).to(torch.uint8)
+    elif isinstance(data, list):
+        folder = [folder] * len(data)
+        images = [
+            np.array(Image.open(os.path.join(folder_name, path)))
+            for folder_name, path in zip(folder, data)
+        ]
+        stacked_images = np.stack(images, axis=0)
+        tensor_data = torch.from_numpy(stacked_images).to(torch.uint8)
+    torchvision.io.write_video(
+        images_path, tensor_data, fps=fps, video_codec='h264', options={'crf': '10'}
+    )
+
+
+from pathlib import Path
+def create_reversed_video(video_path: str) -> str:
+    """
+    Read a video at its native resolution, make it play forward+reverse,
+    and write out a new MP4 using the same FPS.
+    """
+    save_dir = Path(video_path).parent
+    # 1) Load video: returns (T, H, W, C), audio (ignored), and info dict
+    video, _, info = torchvision.io.read_video(video_path, pts_unit="sec")
+    # video: torch.Tensor [T, H, W, C], dtype=torch.uint8
+
+    # 2) Normalize to [0,1] float
+    frames = video.float() / 255.0  # [T, H, W, C]
+
+    # 3) Reverse along time (dim=0)
+    frames_rev = torch.flip(frames, dims=[0])  # [T, H, W, C]
+
+    # 4) Concatenate, dropping the first reversed frame to avoid duplicate
+    #    shape → [2*T-1, H, W, C]
+    combined = torch.cat([frames, frames_rev[1:]], dim=0)
+
+    # 5) Save using your existing helper; it accepts a NumPy array or Tensor
+    save_path = save_dir / "reversed.mp4"
+    fps = int(info["video_fps"])  # original frame rate
+    # If your save_video expects NumPy:
+    save_video(combined.cpu().numpy(), str(save_path), fps=fps*2)
+    # Or pass the Tensor directly:
+    # save_video(combined, str(save_path), fps=fps)
+
+    return str(save_path)
+    
+
+
 
 def run_multiple_tests(
     video_path: str,
@@ -481,7 +522,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_path', type=str, help='Path to save the output video')
     parser.add_argument('--stride', type=int, default=2, help='Frame sampling stride (1-3)')
     parser.add_argument('--center_scale', type=float, default=1.0, help='Center scale factor (0.1-2.0)')
-    parser.add_argument('--sampling_steps', type=int, default=50, help='Number of diffusion steps (1-50)')
+    parser.add_argument('--sampling_steps', type=int, default=30, help='Number of diffusion steps (1-50)')
     parser.add_argument('--random_seed', type=int, default=43, help='Random seed (0-2^31)')
     parser.add_argument('--mode', type=str, default='gradual', help='Camera mode (gradual, direct, or bullet)')
     parser.add_argument('--multi_test', action='store_true', help='Run multiple tests with all camera move types')
