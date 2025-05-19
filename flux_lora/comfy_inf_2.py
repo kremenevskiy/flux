@@ -196,6 +196,8 @@ def infer(
     width, height = control_image.size if (width is None and height is None) else (width, height)
     print('set width and height: ', width, height)
 
+    print(f'lora inference with params: {seed}, {guidance_scale}, {num_inference_steps}')
+
     import_custom_nodes()
     with torch.inference_mode():
         (

@@ -8,10 +8,11 @@ import shutil
 TRAJ_CRAFTER_PATH = '/root/TrajectoryCrafter'
 if TRAJ_CRAFTER_PATH not in sys.path:
     sys.path.append(TRAJ_CRAFTER_PATH)
-
 def process_zoom_in_animation(
     input_video_path: Path,
     output_video_path: Path,
+    zoom_params: str, 
+    sampling_steps: int, 
     venv_python: str = '/root/TrajectoryCrafter/venv/bin/python'
 ) -> Path:
     """
@@ -41,7 +42,8 @@ def process_zoom_in_animation(
             venv_python,
             str(script_path),
             '--video_path', str(input_video_path),
-            '--camera_move', '0; 0; 0.5; 0; 0',  # ZOOM_IN parameters
+            '--camera_move', str(zoom_params),  # ZOOM_IN parameters
+            '--sampling_steps', str(sampling_steps),
             '--mode', 'gradual',
             '--save_path', str(output_video_path)
         ], check=True, env=env)

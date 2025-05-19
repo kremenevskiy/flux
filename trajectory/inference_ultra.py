@@ -164,6 +164,7 @@ def run_trajectory_crafter_with_save(
     mode: str = "gradual",  # gradual, direct, or bullet
     camera_move_name: str = 'ZOOM_IN'  # Optional name of camera move for filename
 ) -> str:
+    print(f"Running TrajectoryCrafter with camera move: {camera_move}")
     temp_output_path = run_trajectory_crafter(
         video_path=video_path,
         camera_move=camera_move,
@@ -574,7 +575,7 @@ if __name__ == "__main__":
             print("Error: --video_path is required for single test")
             parser.print_help()
             sys.exit(1)
-            
+        print(f"Running TrajectoryCrafter with camera move: {args.camera_move}")
         output_path = run_trajectory_crafter_with_save(
             video_path=args.video_path,
             camera_move=args.camera_move,

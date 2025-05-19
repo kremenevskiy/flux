@@ -90,6 +90,12 @@ async def flux_inpaint_image(
     image: UploadFile = File(...),  # noqa: B008
     image_mask: UploadFile = File(...),  # noqa: B008
     seed: int = Form(0),
+    width: int = Form(1024),
+    height: int = Form(1024),
+    guidance_scale: float = Form(3.5),
+    controlnet_conditioning_scale: float = Form(0.4),
+    num_inference_steps: int = Form(28),
+    true_guidance_scale: float = Form(1.0),
 ) -> FileResponse:
     base_img_path = (
         Path(config.config.dirs.images_dir)
@@ -116,6 +122,12 @@ async def flux_inpaint_image(
         save_path=str(inpainted_img_path),
         model_manager=model_manager,
         seed=seed,
+        height=height,
+        width=width,
+        guidance_scale=guidance_scale,
+        controlnet_conditioning_scale=controlnet_conditioning_scale,
+        num_inference_steps=num_inference_steps,
+        true_guidance_scale=true_guidance_scale,
     )
 
     # Return the processed file as a response
@@ -239,6 +251,8 @@ async def flux_canny_image(
 @app.post('/animation_zoom_in/')
 async def animation_zoom_in(
     video: UploadFile = File(...),
+    zoom_params: str = Form(...),
+    sampling_steps: int = Form(...),
 ) -> FileResponse:
     # Generate unique ID for this request
     unique_id = utils_service.get_hash_from_uuid()
@@ -256,7 +270,9 @@ async def animation_zoom_in(
         file.write(await video.read())
 
     # Process the video
-    animation_process.process_zoom_in_animation(input_video_path, output_video_path)
+    animation_process.process_zoom_in_animation(
+        input_video_path, output_video_path, zoom_params=zoom_params, sampling_steps=sampling_steps
+    )
 
     # Return the processed video
     return FileResponse(
