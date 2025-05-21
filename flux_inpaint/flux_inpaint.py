@@ -37,6 +37,12 @@ def create_inpaint(
     save_path: str,
     model_manager: model_manager.ModelManager,
     seed: int = 24,
+    height: int = 1024,
+    width: int = 1024,
+    guidance_scale: float = 3.5,
+    controlnet_conditioning_scale: float = 0.4,
+    num_inference_steps: int = 28,
+    true_guidance_scale: float = 1.0,
 ) -> None:
     if seed == 0:
         seed = random.randint(0, 1000)
@@ -45,18 +51,31 @@ def create_inpaint(
     mask = Image.open(mask_path)
     generator = torch.Generator(device='cuda').manual_seed(seed)
     pipe = model_manager.get_model(model_name='flux_inpaint')
+
+    params = {
+        'prompt': prompt,
+        'height': height,
+        'width': width,
+        'control_image': image,
+        'control_mask': mask,
+        'num_inference_steps': num_inference_steps,
+        'generator': generator,
+    }
+    print('inpaint params')
+    print(params)
+
     result = pipe(
         prompt=prompt,
-        height=image.size[1],
-        width=image.size[0],
+        height=height,
+        width=width,
         control_image=image,
         control_mask=mask,
-        num_inference_steps=28,
+        num_inference_steps=num_inference_steps,
         generator=generator,
-        controlnet_conditioning_scale=0.4,
-        guidance_scale=3.5,
+        controlnet_conditioning_scale=controlnet_conditioning_scale,
+        guidance_scale=guidance_scale,
         negative_prompt='',
-        true_guidance_scale=1.0,  # default: 3.5 for alpha and 1.0 for beta
+        true_guidance_scale=true_guidance_scale,  # default: 3.5 for alpha and 1.0 for beta
     ).images[0]
 
     result.save(save_path)

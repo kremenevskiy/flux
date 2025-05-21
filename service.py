@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 import config
 import model_manager as manager
 import utils_service
-from flux_base import flux_generate
+from flux_base import flux_generate, flux_words_lora
 from flux_canny import flux_canny
 from flux_inpaint import flux_inpaint
 from flux_lora import comfy_inf_2, inference_lora
@@ -71,6 +71,40 @@ async def flux_generate_image_with_tier(
         num_inference_steps=num_inference_steps,
         character_lora_strength=character_lora_strength,
         style_lora_strength=style_lora_strength,
+    )
+    img_save_path = (
+        Path(config.config.dirs.generation_dir) / f'{utils_service.get_hash_from_uuid()}.png'
+    )
+    img.save(img_save_path)
+
+    return FileResponse(
+        path=str(img_save_path),
+        media_type='image/jpeg',
+        filename=f'processed_{img_save_path.name}',
+    )
+
+
+@app.post('/flux-generate-image-with-letters-lora/')
+async def flux_generate_image_with_lora(
+    prompt: str = Form(...),
+    lora_name: str = Form(...),
+    guidance_scale: float = Form(3.5),
+    num_inference_steps: int = Form(28),
+    seed: int = Form(0),
+    width: int = Form(1024),
+    height: int = Form(1024),
+    lora_strength: float = Form(1.0),
+) -> FileResponse:
+    img = flux_words_lora.infer_with_lora(
+        prompt=prompt,
+        model_manager=model_manager,
+        lora_name=lora_name,
+        width=width,
+        height=height,
+        seed=seed,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
+        lora_strength=lora_strength,
     )
     img_save_path = (
         Path(config.config.dirs.generation_dir) / f'{utils_service.get_hash_from_uuid()}.png'
