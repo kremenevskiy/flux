@@ -56,6 +56,7 @@ def infer_with_lora(
         lora_strength=lora_strength,
     )
     print(f'lora_name: {lora_name}, lora_strength: {lora_strength}, trigger_word: {trigger_word}')
+    print(f'width: {width}, height: {height}')
 
     prompt = f'{trigger_word}, {prompt}'
     print(f'result prompt: {prompt}')
