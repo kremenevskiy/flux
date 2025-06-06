@@ -1,5 +1,7 @@
+import gc
 from pathlib import Path
 
+import torch
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import FileResponse
@@ -10,7 +12,7 @@ import utils_service
 from flux_base import flux_generate, flux_words_lora
 from flux_canny import flux_canny
 from flux_inpaint import flux_inpaint
-from flux_lora import comfy_inf_2, inference_lora
+from flux_lora import canny_lora, comfy_inf_2, inference_lora
 from trajectory import animation_process
 
 app = FastAPI()
@@ -282,6 +284,57 @@ async def flux_canny_image(
     )
 
 
+@app.post('/flux-canny-lora-image-default/')
+async def flux_canny_image_default(
+    prompt: str = Form(...),
+    image: UploadFile = File(...),  # noqa: B008
+    seed: int = Form(0),
+    num_inference_steps: int = Form(30),
+    guidance_scale: float = Form(30.0),
+    lora_name: str = Form('reelslora_old'),
+    canny_lora_strength: float = Form(0.8),
+    frames_lora_strength: float = Form(1.0),
+    width: int | None = Form(None),
+    height: int | None = Form(None),
+) -> FileResponse:
+    base_img_path = (
+        Path(config.config.dirs.canny_base_dir)
+        / f'{utils_service.get_hash_from_uuid()}{Path(image.filename).suffix}'
+    )
+    canny_img_path = (
+        Path(config.config.dirs.canny_dir)
+        / f'{utils_service.get_hash_from_uuid()}{Path(image.filename).suffix}'
+    )
+
+    with base_img_path.open('wb') as file:
+        file.write(await image.read())
+
+    img = canny_lora.inference_frame_canny_with_lora(
+        prompt=prompt,
+        control_image_path=str(base_img_path.resolve()),
+        model_manager=model_manager,
+        seed=seed,
+        lora_name=lora_name,
+        canny_lora_strength=canny_lora_strength,
+        frames_lora_strength=frames_lora_strength,
+        width=width,
+        height=height,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
+    )
+
+    img_save_path = (
+        Path(config.config.dirs.generation_dir) / f'{utils_service.get_hash_from_uuid()}.png'
+    )
+    img.save(img_save_path)
+
+    return FileResponse(
+        path=str(img_save_path),
+        media_type='image/jpeg',
+        filename=f'processed_{img_save_path.name}',
+    )
+
+
 @app.post('/animation_zoom_in/')
 async def animation_zoom_in(
     video: UploadFile = File(...),
@@ -289,6 +342,8 @@ async def animation_zoom_in(
     sampling_steps: int = Form(...),
 ) -> FileResponse:
     # Generate unique ID for this request
+    model_manager.unload_model()  # free memory
+
     unique_id = utils_service.get_hash_from_uuid()
 
     # Create unique directory for this request
@@ -307,6 +362,10 @@ async def animation_zoom_in(
     animation_process.process_zoom_in_animation(
         input_video_path, output_video_path, zoom_params=zoom_params, sampling_steps=sampling_steps
     )
+
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
 
     # Return the processed video
     return FileResponse(

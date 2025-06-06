@@ -1,9 +1,9 @@
 # model_manager.py
 
 
-import torch
 import gc
 
+import torch
 
 
 class ModelManager:
@@ -23,6 +23,8 @@ class ModelManager:
             self.model = self.load_flux_generate_model()
         elif model_name == 'flux_generate_with_lora':
             self.model = self.load_flux_with_lora()
+        elif model_name == 'flux_generate_canny_with_lora':
+            self.model = self.load_flux_canny_with_lora()
         elif model_name == 'flux_inpaint':
             self.model = self.load_flux_inpaint_model()
         elif model_name == 'flux_canny':
@@ -40,7 +42,7 @@ class ModelManager:
         # Unload the current model and clear CUDA cache
         if isinstance(self.model, tuple):
             for sub_model in self.model:
-                del sub_model  
+                del sub_model
         del self.model
         self.model = None
         self.current_model_name = None
@@ -83,9 +85,13 @@ class ModelManager:
         pipe = get_model_pipe()
         return pipe
 
-
     def load_flux_with_lora(self):
         from flux_base.flux_generate import get_model_pipe_with_lora
 
         pipe = get_model_pipe_with_lora()
         return pipe
+
+    def load_flux_canny_with_lora(self):
+        from flux_lora.canny_lora import get_model_pipe
+
+        return get_model_pipe()

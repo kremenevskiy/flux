@@ -137,6 +137,7 @@ def get_model_pipe():
     loraloader = NODE_CLASS_MAPPINGS['LoraLoader']()
     loraloader_23 = loraloader.load_lora(
         lora_name='frames_lora_1.safetensors',
+        # lora_name='reelslorafluxv13.safetensors',
         strength_model=0.8,
         strength_clip=1,
         model=get_value_at_index(unetloader_10, 0),
